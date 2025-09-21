@@ -1,3 +1,4 @@
 <div>
-    <input type="text" name="search" placeholder="Search a topic key word or phrase">
+    <label for="search-topics">Search</label>
+    <input class="title form-control h-100 rounded-1 shadow-none" id="search-topics" type="text" name="search-topics" placeholder="Enter a key word or phrase">
 </div>
