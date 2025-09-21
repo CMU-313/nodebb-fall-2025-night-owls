@@ -1,8 +1,7 @@
 <div>
     <form id="search-topics-form" onsubmit="return searchTopics(event)">
-        <label for="search-topics">Search</label>
-        <input class="title form-control h-100 rounded-1 shadow-none" id="search-topics" type="text" name="search-topics" placeholder="Enter a key word or phrase">
-        <button type="submit" id="search-topics-submit">Submit</button>
+        <input class="title form-control h-100 rounded-1 shadow-none" id="search-topics" type="text" name="search-topics" placeholder="Search a key word or phrase" display="inline">
+        <button class="btn btn-primary btn-sm text-nowrap" type="submit" id="search-topics-submit" display="inline">Submit</button>
     </form>
 </div>
 
@@ -11,6 +10,6 @@
     event.preventDefault();
     const query = document.getElementById("search-topics").value;
     console.log("Searching for:", query);
-    alert("Searching for:", query);
+    alert("Searching for:" + query);
   }
 </script>
