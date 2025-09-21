@@ -10,6 +10,7 @@ const user = require('../user');
 const plugins = require('../plugins');
 const categories = require('../categories');
 const utils = require('../utils');
+const anonymous = require('../topics/anonymous');
 
 module.exports = function (Posts) {
 	Posts.getPostSummaryByPids = async function (pids, uid, options) {
@@ -22,7 +23,7 @@ module.exports = function (Posts) {
 		options.escape = options.hasOwnProperty('escape') ? options.escape : false;
 		options.extraFields = options.hasOwnProperty('extraFields') ? options.extraFields : [];
 
-		const fields = ['pid', 'tid', 'toPid', 'url', 'content', 'sourceContent', 'uid', 'timestamp', 'deleted', 'upvotes', 'downvotes', 'replies', 'handle'].concat(options.extraFields);
+		const fields = ['pid', 'tid', 'toPid', 'url', 'content', 'sourceContent', 'uid', 'timestamp', 'deleted', 'upvotes', 'downvotes', 'replies', 'handle', 'anonymous'].concat(options.extraFields);
 
 		let posts = await Posts.getPostsFields(pids, fields);
 		posts = posts.filter(Boolean);
@@ -51,6 +52,10 @@ module.exports = function (Posts) {
 			post.toPid = utils.isNumber(post.toPid) ? parseInt(post.toPid, 10) : post.toPid;
 
 			post.user = uidToUser[post.uid];
+			if (post.anonymous) {
+				post.user = anonymous.getMaskedUser();
+				post.isAnonymous = true;
+			}
 			Posts.overrideGuestHandle(post, post.handle);
 			post.handle = undefined;
 			post.topic = tidToTopic[post.tid];

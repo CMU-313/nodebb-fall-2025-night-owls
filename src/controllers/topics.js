@@ -133,7 +133,14 @@ topicsController.get = async function getTopic(req, res, next) {
 		analytics.increment([`pageviews:byCid:${topicData.category.cid}`]),
 	]);
 
-	topicData.author = author;
+	if (topicData.anonymous) {
+		topicData.author = {
+			username: 'Anonymous',
+			userslug: null,
+		};
+	} else {
+		topicData.author = author;
+	}
 	topicData.pagination = pagination.create(currentPage, pageCount, req.query);
 	topicData.pagination.rel.forEach((rel) => {
 		rel.href = `${url}/topic/${topicData.slug}${rel.href}`;

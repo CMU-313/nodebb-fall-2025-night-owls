@@ -16,6 +16,7 @@ const posts = require('../posts');
 const privileges = require('../privileges');
 const categories = require('../categories');
 const translator = require('../translator');
+const anonymous = require('./anonymous');
 
 module.exports = function (Topics) {
 	Topics.create = async function (data) {
@@ -35,6 +36,7 @@ module.exports = function (Topics) {
 			lastposttime: 0,
 			postcount: 0,
 			viewcount: 0,
+			anonymous: data.anonymous ? 1 : 0,
 		};
 
 		if (Array.isArray(data.tags) && data.tags.length) {
@@ -83,6 +85,8 @@ module.exports = function (Topics) {
 	Topics.post = async function (data) {
 		data = await plugins.hooks.fire('filter:topic.post', data);
 		const { uid } = data;
+		const allowAnonymous = parseInt(uid, 10) > 0;
+		data.anonymous = allowAnonymous && utils.toBoolean(data.anonymous);
 
 		const [categoryExists, canCreate, canTag, isAdmin] = await Promise.all([
 			parseInt(data.cid, 10) > 0 ? categories.exists(data.cid) : true,
@@ -126,6 +130,7 @@ module.exports = function (Topics) {
 		postData.tid = tid;
 		postData.ip = data.req ? data.req.ip : null;
 		postData.isMain = true;
+		postData.anonymous = data.anonymous ? 1 : 0;
 		postData = await posts.create(postData);
 		postData = await onNewPost(postData, data);
 
@@ -142,9 +147,17 @@ module.exports = function (Topics) {
 			await Topics.follow(postData.tid, uid);
 		}
 		const topicData = topics[0];
+		postData.anonymous = !!postData.anonymous;
+		if (postData.anonymous) {
+			anonymous.maskPost(postData);
+		}
+		topicData.anonymous = !!topicData.anonymous;
 		topicData.unreplied = true;
 		topicData.mainPost = postData;
 		topicData.index = 0;
+		if (topicData.anonymous) {
+			anonymous.maskTopic(topicData);
+		}
 		postData.index = 0;
 
 		if (topicData.scheduled) {

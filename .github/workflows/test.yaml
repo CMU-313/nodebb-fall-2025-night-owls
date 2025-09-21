@@ -46,7 +46,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: NPM Install
         uses: bahmutov/npm-install@v1
@@ -78,6 +78,9 @@ jobs:
             }
         run: |
           node app --setup="${SETUP}" --ci="${CI}"
+
+      - name: Build assets
+        run: ./nodebb build
 
       - name: Run ESLint
         run: npm run lint

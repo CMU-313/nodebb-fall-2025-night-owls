@@ -9,6 +9,7 @@ const user = require('../user');
 const posts = require('../posts');
 const plugins = require('../plugins');
 const utils = require('../utils');
+const anonymous = require('./anonymous');
 
 module.exports = function (Topics) {
 	Topics.getTeasers = async function (topics, options) {
@@ -43,7 +44,7 @@ module.exports = function (Topics) {
 		});
 
 		const [allPostData, callerSettings] = await Promise.all([
-			posts.getPostsFields(teaserPids, ['pid', 'uid', 'timestamp', 'tid', 'content', 'sourceContent']),
+			posts.getPostsFields(teaserPids, ['pid', 'uid', 'timestamp', 'tid', 'content', 'sourceContent', 'anonymous']),
 			user.getSettings(uid),
 		]);
 		let postData = allPostData.filter(post => post && post.pid);
@@ -65,6 +66,10 @@ module.exports = function (Topics) {
 			}
 
 			post.user = users[post.uid];
+			if (post.anonymous) {
+				post.user = anonymous.getMaskedUser();
+				post.isAnonymous = true;
+			}
 			post.timestampISO = utils.toISOString(post.timestamp);
 			tidToPost[post.tid] = post;
 		});

@@ -75,3 +75,5 @@ test.sh
 
 .docker/**
 !**/.gitkeep
+
+.github/copilot-instructions.md

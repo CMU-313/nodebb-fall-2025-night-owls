@@ -13,6 +13,7 @@ const categories = require('../categories');
 const activitypub = require('../activitypub');
 const privileges = require('../privileges');
 const social = require('../social');
+const anonymous = require('./anonymous');
 
 const Topics = module.exports;
 
@@ -133,8 +134,12 @@ Topics.getTopicsByTids = async function (tids, options) {
 		if (topic) {
 			topic.thumbs = result.thumbs[i];
 			topic.category = result.categoriesMap[topic.cid];
-			topic.user = topic.uid ? result.usersMap[topic.uid] : { ...result.usersMap[topic.uid] };
-			if (result.tidToGuestHandle[topic.tid]) {
+			const topicOwner = topic.uid ? result.usersMap[topic.uid] : result.usersMap[topic.uid];
+			topic.user = topicOwner ? { ...topicOwner } : anonymous.getMaskedUser();
+			if (topic.anonymous) {
+				topic.user = anonymous.getMaskedUser();
+				topic.isAnonymous = true;
+			} else if (result.tidToGuestHandle[topic.tid]) {
 				topic.user.username = validator.escape(result.tidToGuestHandle[topic.tid]);
 				topic.user.displayname = topic.user.username;
 			}

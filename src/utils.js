@@ -19,6 +19,14 @@ utils.getLanguage = function () {
 	return meta.config && meta.config.defaultLang ? meta.config.defaultLang : 'en-GB';
 };
 
+utils.toBoolean = function (value) {
+	if (typeof value === 'string') {
+		const normalized = value.trim().toLowerCase();
+		return ['1', 'true', 'yes', 'on'].includes(normalized);
+	}
+	return !!value;
+};
+
 utils.generateUUID = function () {
 	// from https://github.com/tracker1/node-uuid4/blob/master/index.js
 	let rnd = crypto.randomBytes(16);

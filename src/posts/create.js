@@ -28,7 +28,7 @@ module.exports = function (Posts) {
 		}
 
 		const pid = data.pid || await db.incrObjectField('global', 'nextPid');
-		let postData = { pid, uid, tid, content, sourceContent, timestamp };
+		let postData = { pid, uid, tid, content, sourceContent, timestamp, anonymous: data.anonymous ? 1 : 0 };
 
 		if (data.toPid) {
 			postData.toPid = data.toPid;
@@ -83,6 +83,7 @@ module.exports = function (Posts) {
 		]);
 
 		const result = await plugins.hooks.fire('filter:post.get', { post: postData, uid: data.uid });
+		result.post.anonymous = !!result.post.anonymous;
 		result.post.isMain = isMain;
 		plugins.hooks.fire('action:post.save', { post: { ...result.post, _activitypub } });
 		return result.post;
