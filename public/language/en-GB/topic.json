@@ -186,6 +186,7 @@
 
 	"composer.title-placeholder": "Enter your topic title here...",
 	"composer.handle-placeholder": "Enter your name/handle here",
+	"composer.post-anonymously": "Make post anonymous",
 	"composer.hide": "Hide",
 	"composer.discard": "Discard",
 	"composer.submit": "Submit",
