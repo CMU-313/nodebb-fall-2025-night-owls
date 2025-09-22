@@ -11,7 +11,7 @@ const plugins = require('../plugins');
 const intFields = [
 	'tid', 'cid', 'uid', 'mainPid', 'postcount',
 	'viewcount', 'postercount', 'followercount',
-	'deleted', 'locked', 'pinned', 'pinExpiry',
+	'deleted', 'locked', 'pinned', 'archived', 'pinExpiry', 'archiveExpiry',
 	'timestamp', 'upvotes', 'downvotes',
 	'lastposttime', 'deleterUid',
 ];
@@ -118,6 +118,10 @@ function modifyTopic(topic, fields) {
 
 	if (topic.hasOwnProperty('pinExpiry')) {
 		topic.pinExpiryISO = utils.toISOString(topic.pinExpiry);
+	}
+
+	if (topic.hasOwnProperty('archiveExpiry')) {
+		topic.archiveExpiryISO = utils.toISOString(topic.archiveExpiry);
 	}
 
 	if (topic.hasOwnProperty('upvotes') && topic.hasOwnProperty('downvotes')) {

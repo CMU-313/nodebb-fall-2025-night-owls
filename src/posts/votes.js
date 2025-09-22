@@ -268,7 +268,7 @@ module.exports = function (Posts) {
 	};
 
 	async function updateTopicVoteCount(postData) {
-		const topicData = await topics.getTopicFields(postData.tid, ['mainPid', 'cid', 'pinned']);
+		const topicData = await topics.getTopicFields(postData.tid, ['mainPid', 'cid', 'pinned', 'archived']);
 
 		if (postData.uid) {
 			if (postData.votes !== 0) {
@@ -289,6 +289,9 @@ module.exports = function (Posts) {
 			db.sortedSetAdd('topics:votes', postData.votes, postData.tid),
 		];
 		if (!topicData.pinned) {
+			promises.push(db.sortedSetAdd(`cid:${topicData.cid}:tids:votes`, postData.votes, postData.tid));
+		}
+		if (!topicData.archived) {
 			promises.push(db.sortedSetAdd(`cid:${topicData.cid}:tids:votes`, postData.votes, postData.tid));
 		}
 		await Promise.all(promises);

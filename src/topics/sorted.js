@@ -154,6 +154,7 @@ module.exports = function (Topics) {
 
 		const sets = [];
 		const pinnedSets = [];
+		const archivedSets = [];
 		params.cids.forEach((cid) => {
 			if (params.sort === 'recent' || params.sort === 'old') {
 				sets.push(`cid:${cid}:tids`);
@@ -161,14 +162,17 @@ module.exports = function (Topics) {
 				sets.push(`cid:${cid}:tids${params.sort ? `:${params.sort}` : ''}`);
 			}
 			pinnedSets.push(`cid:${cid}:tids:pinned`);
+			archivedSets.push(`cid:${cid}:tids:archived`);
 		});
 		let pinnedTids = await db.getSortedSetRevRange(pinnedSets, 0, -1);
 		pinnedTids = await Topics.tools.checkPinExpiry(pinnedTids);
+		let archivedTids = await db.getSortedSetRevRange(archivedSets, 0, -1);
+		archivedTids = await Topics.tools.checkPinExpiry(archivedTids);
 		const method = params.sort === 'old' ?
 			'getSortedSetRange' :
 			'getSortedSetRevRange';
 		const tids = await db[method](sets, 0, meta.config.recentMaxTopics - 1);
-		return pinnedTids.concat(tids);
+		return Topics.concat([pinnedTids, archivedTids, tids]);
 	}
 
 	async function sortTids(tids, params) {
@@ -183,7 +187,7 @@ module.exports = function (Topics) {
 		const { sortMap, fields } = await plugins.hooks.fire('filter:topics.sortOptions', {
 			params,
 			fields: [
-				'tid', 'timestamp', 'lastposttime', 'upvotes', 'downvotes', 'postcount', 'pinned',
+				'tid', 'timestamp', 'lastposttime', 'upvotes', 'downvotes', 'postcount', 'pinned', 'archived'
 			],
 			sortMap: {
 				recent: sortRecent,
@@ -205,11 +209,21 @@ module.exports = function (Topics) {
 			topicData.sort(sortFn);
 		}
 
+		if (params.floatArchived) {
+			floatArchived(topicData, sortFn);
+		} else {
+			topicData.sort(sortFn);
+		}
+
 		return topicData.map(topic => topic && topic.tid);
 	}
 
 	function floatPinned(topicData, sortFn) {
 		topicData.sort((a, b) => (a.pinned !== b.pinned ? b.pinned - a.pinned : sortFn(a, b)));
+	}
+
+	function floatArchived(topicData, sortFn) {
+		topicData.sort((a, b) => (a.archived !== b.archived ? b.archived - a.archived : sortFn(a, b)));
 	}
 
 	function sortRecent(a, b) {

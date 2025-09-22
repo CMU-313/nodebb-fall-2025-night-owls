@@ -364,6 +364,16 @@ chatsAPI.getPinnedMessages = async (caller, { start, roomId }) => {
 	return { messages };
 };
 
+chatsAPI.getArchivedMessages = async (caller, { start, roomId }) => {
+	start = parseInt(start, 10) || 0;
+	const isInRoom = await messaging.isUserInRoom(caller.uid, roomId);
+	if (!isInRoom) {
+		throw new Error('[[error:no-privileges]]');
+	}
+	const messages = await messaging.getArchivedMessages(roomId, caller.uid, start, start + 49);
+	return { messages };
+};
+
 chatsAPI.getMessage = async (caller, { mid, roomId } = {}) => {
 	if (!mid || !roomId) {
 		throw new Error('[[error:invalid-data]]');

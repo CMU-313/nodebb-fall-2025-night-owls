@@ -36,6 +36,8 @@
     "chat.view-users-list": "View users list",
     "chat.pinned-messages": "Pinned Messages",
     "chat.no-pinned-messages": "There are no pinned messages",
+    "chat.archived-messages": "Archived Messages",
+    "chat.no-archived-messages": "There are no archived messages",
     "chat.pin-message": "Pin Message",
     "chat.unpin-message": "Unpin Message",
     "chat.public-rooms": "Public Rooms (%1)",

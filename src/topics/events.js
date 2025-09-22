@@ -37,6 +37,14 @@ Events._types = {
 		icon: 'fa-thumb-tack fa-rotate-90',
 		translation: async (event, language) => translateSimple(event, language, 'topic:user-unpinned-topic'),
 	},
+	archive: {
+		icon: 'fa-thumb-tack',
+		translation: async (event, language) => translateSimple(event, language, 'topic:user-archived-topic'),
+	},
+	unarchive: {
+		icon: 'fa-thumb-tack fa-rotate-90',
+		translation: async (event, language) => translateSimple(event, language, 'topic:user-unarchived-topic'),
+	},
 	lock: {
 		icon: 'fa-lock',
 		translation: async (event, language) => translateSimple(event, language, 'topic:user-locked-topic'),

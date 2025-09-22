@@ -60,13 +60,16 @@ module.exports = function (Topics) {
 
 	Topics.updateLastPostTime = async function (tid, lastposttime) {
 		await Topics.setTopicField(tid, 'lastposttime', lastposttime);
-		const topicData = await Topics.getTopicFields(tid, ['cid', 'deleted', 'pinned']);
+		const topicData = await Topics.getTopicFields(tid, ['cid', 'deleted', 'pinned', 'archived']);
 
 		await db.sortedSetAdd(`cid:${topicData.cid}:tids:lastposttime`, lastposttime, tid);
 
 		await Topics.updateRecent(tid, lastposttime);
 
 		if (!topicData.pinned) {
+			await db.sortedSetAdd(`cid:${topicData.cid}:tids`, lastposttime, tid);
+		}
+		if (!topicData.archived) {
 			await db.sortedSetAdd(`cid:${topicData.cid}:tids`, lastposttime, tid);
 		}
 	};

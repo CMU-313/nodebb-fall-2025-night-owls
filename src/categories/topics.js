@@ -28,19 +28,23 @@ module.exports = function (Categories) {
 	};
 
 	Categories.getTopicIds = async function (data) {
-		const [pinnedTids, set] = await Promise.all([
+		const [pinnedTids, archivedTids, set] = await Promise.all([
 			Categories.getPinnedTids({ ...data, start: 0, stop: -1 }),
+			Categories.getArchivedTids({ ...data, start: 0, stop: -1 }),
 			Categories.buildTopicsSortedSet(data),
 		]);
 
 		const totalPinnedCount = pinnedTids.length;
 		const pinnedTidsOnPage = pinnedTids.slice(data.start, data.stop !== -1 ? data.stop + 1 : undefined);
 		const pinnedCountOnPage = pinnedTidsOnPage.length;
+		const totalArchivedCount = archivedTids.length;
+		const archivedTidsOnPage = archivedTids.slice(data.start, data.stop !== -1 ? data.stop + 1 : undefined);
+		const archivedCountOnPage = archivedTidsOnPage.length;
 		const topicsPerPage = data.stop - data.start + 1;
-		const normalTidsToGet = Math.max(0, topicsPerPage - pinnedCountOnPage);
+		const normalTidsToGet = Math.max(0, topicsPerPage - pinnedCountOnPage - archivedCountOnPage);
 
 		if (!normalTidsToGet && data.stop !== -1) {
-			return pinnedTidsOnPage;
+			return pinnedTidsOnPage + archivedTidsOnPage;
 		}
 
 		if (plugins.hooks.hasListeners('filter:categories.getTopicIds')) {
@@ -50,14 +54,17 @@ module.exports = function (Categories) {
 				pinnedTids: pinnedTidsOnPage,
 				allPinnedTids: pinnedTids,
 				totalPinnedCount: totalPinnedCount,
+				archivedTids: archivedTidsOnPage,
+				allArchivedTids: archivedTids,
+				totalArchivedCount: totalArchivedCount,
 				normalTidsToGet: normalTidsToGet,
 			});
 			return result && result.tids;
 		}
 
 		let { start } = data;
-		if (start > 0 && totalPinnedCount) {
-			start -= totalPinnedCount - pinnedCountOnPage;
+		if (start > 0 && totalPinnedCount && totalArchivedCount) {
+			start -= totalPinnedCount - pinnedCountOnPage - totalArchivedCount - archivedCountOnPage;
 		}
 
 		const stop = data.stop === -1 ? data.stop : start + normalTidsToGet - 1;
@@ -159,6 +166,23 @@ module.exports = function (Categories) {
 		const pinnedTids = canSchedule ? allPinnedTids : await filterScheduledTids(allPinnedTids);
 
 		return await topics.tools.checkPinExpiry(pinnedTids);
+	};
+
+	Categories.getArchivedTids = async function (data) {
+		if (plugins.hooks.hasListeners('filter:categories.getArchivedTids')) {
+			const result = await plugins.hooks.fire('filter:categories.getArchivedTids', {
+				archivedTids: [],
+				data: data,
+			});
+			return result && result.archivedTids;
+		}
+		const [allArchivedTids, canSchedule] = await Promise.all([
+			db.getSortedSetRevRange(`cid:${data.cid}:tids:archived`, data.start, data.stop),
+			privileges.categories.can('topics:schedule', data.cid, data.uid),
+		]);
+		const archivedTids = canSchedule ? allArchivedTids : await filterScheduledTids(allArchivedTids);
+
+		return await topics.tools.checkArchiveExpiry(archivedTids);
 	};
 
 	Categories.modifyTopicsByPrivilege = function (topics, privileges) {

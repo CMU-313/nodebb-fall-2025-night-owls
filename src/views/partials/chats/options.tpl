@@ -47,6 +47,11 @@
 		<i class="fa fa-thumb-tack text-muted"></i>
 	</button>
 
+	<!-- archived messages -->
+	<button component="chat/archived/messages/btn" class="btn btn-ghost btn-sm d-none d-lg-block flex-nowrap" title="[[modules:chat.archived-messages]]" data-bs-toggle="tooltip" data-bs-placement="bottom">
+		<i class="fa fa-thumb-tack text-muted"></i>
+	</button>
+
 	<!-- manage/options dropdown -->
 	<div class="dropdown d-flex" data-manual-tooltip="1" title="[[modules:chat.options]]">
 		<button component="chat/controlsToggle" class="btn btn-ghost btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

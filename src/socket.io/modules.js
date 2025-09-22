@@ -208,6 +208,17 @@ SocketModules.chats.loadPinnedMessages = async (socket, data) => {
 	return messages;
 };
 
+SocketModules.chats.loadArchivedMessages = async (socket, data) => {
+	sockets.warnDeprecated(socket, 'GET /api/v3/chats/:roomId/messages/archived');
+
+	if (!data || !data.roomId || !utils.isNumber(data.start)) {
+		throw new Error('[[error:invalid-data]]');
+	}
+
+	const { messages } = await api.chats.getArchivedMessages(socket, data);
+	return messages;
+};
+
 SocketModules.chats.typing = async (socket, data) => {
 	sockets.warnDeprecated(socket, 'PUT /api/v3/chats/:roomId/typing');
 

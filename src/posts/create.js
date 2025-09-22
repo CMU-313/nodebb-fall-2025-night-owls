@@ -68,7 +68,7 @@ module.exports = function (Posts) {
 		({ post: postData } = await plugins.hooks.fire('filter:post.create', { post: postData, data: data }));
 		await db.setObject(`post:${postData.pid}`, postData);
 
-		const topicData = await topics.getTopicFields(tid, ['cid', 'pinned']);
+		const topicData = await topics.getTopicFields(tid, ['cid', 'pinned', 'archived']);
 		postData.cid = topicData.cid;
 
 		await Promise.all([
@@ -76,7 +76,7 @@ module.exports = function (Posts) {
 			utils.isNumber(pid) ? db.incrObjectField('global', 'postCount') : null,
 			user.onNewPostMade(postData),
 			topics.onNewPostMade(postData),
-			categories.onNewPostMade(topicData.cid, topicData.pinned, postData),
+			categories.onNewPostMade(topicData.cid, topicData.pinned, topicData.archived, postData),
 			groups.onNewPostMade(postData),
 			addReplyTo(postData, timestamp),
 			Posts.uploads.sync(postData.pid),

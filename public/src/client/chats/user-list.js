@@ -21,6 +21,16 @@ define('forum/chats/user-list', ['api'], function (api) {
 				startUpdating(roomId, userListEl);
 			}
 		});
+		const archivedMessageListEl = container.find('[component="chat/messages/archived/container"]');
+		container.find('[component="chat/user/list/btn"]').on('click', () => {
+			userListEl.toggleClass('hidden');
+			if (userListEl.hasClass('hidden')) {
+				stopUpdating();
+			} else {
+				archivedMessageListEl.addClass('hidden');
+				startUpdating(roomId, userListEl);
+			}
+		});
 
 		$(window).off('action:ajaxify.start', stopUpdating)
 			.one('action:ajaxify.start', stopUpdating);

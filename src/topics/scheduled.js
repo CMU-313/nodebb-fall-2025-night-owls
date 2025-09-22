@@ -76,6 +76,22 @@ Scheduled.pin = async function (tid, topicData) {
 	]);
 };
 
+// topics/tools.js#archive/unarchive would block non-admins/mods, thus the local versions
+Scheduled.archive = async function (tid, topicData) {
+	return Promise.all([
+		topics.setTopicField(tid, 'archived', 1),
+		db.sortedSetAdd(`cid:${topicData.cid}:tids:archived`, Date.now(), tid),
+		db.sortedSetsRemove([
+			`cid:${topicData.cid}:tids`,
+			`cid:${topicData.cid}:tids:create`,
+			`cid:${topicData.cid}:tids:posts`,
+			`cid:${topicData.cid}:tids:votes`,
+			`cid:${topicData.cid}:tids:views`,
+			`cid:${topicData.cid}:tids:pinned`,
+		], tid),
+	]);
+};
+
 Scheduled.reschedule = async function ({ cid, tid, timestamp, uid }) {
 	if (timestamp < Date.now()) {
 		await postTids([tid]);

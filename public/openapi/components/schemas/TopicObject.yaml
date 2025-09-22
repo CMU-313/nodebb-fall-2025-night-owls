@@ -187,6 +187,12 @@ TopicObject:
         pinExpiryISO:
           type: string
           description: "`pinExpiry` rendered as an ISO 8601 format"
+        archiveExpiry:
+          type: number
+          description: A UNIX timestamp indicating when an archived topic will no longer be archived (i.e. the archive has expired)
+        archiveExpiryISO:
+          type: string
+          description: "`archiveExpiry` rendered as an ISO 8601 format"
         index:
           type: number
       required:
@@ -234,6 +240,8 @@ TopicObjectSlim:
           type: number
           description: Whether or not this particular topic is pinned to the top of the
             category
+        archived:
+          type: number
         timestamp:
           type: number
         timestampISO:
@@ -250,6 +258,12 @@ TopicObjectSlim:
         pinExpiryISO:
           type: string
           description: "`pinExpiry` rendered as an ISO 8601 format"
+        archiveExpiry:
+          type: number
+          description: A UNIX timestamp indicating when an archived topic will no longer be archived (i.e. the archive has expired)
+        archiveExpiryISO:
+          type: string
+          description: "`archiveExpiry` rendered as an ISO 8601 format"
         upvotes:
           type: number
         downvotes:

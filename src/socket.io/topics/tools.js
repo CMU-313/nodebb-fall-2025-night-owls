@@ -38,4 +38,12 @@ module.exports = function (SocketTopics) {
 
 		await topics.tools.orderPinnedTopics(socket.uid, data);
 	};
+
+	SocketTopics.orderArchivedTopics = async function (socket, data) {
+		if (!data || !data.tid) {
+			throw new Error('[[error:invalid-data]]');
+		}
+
+		await topics.tools.orderArchivedTopics(socket.uid, data);
+	};
 };

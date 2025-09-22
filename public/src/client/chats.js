@@ -11,6 +11,7 @@ define('forum/chats', [
 	'forum/chats/user-list',
 	'forum/chats/message-search',
 	'forum/chats/pinned-messages',
+	'forum/chats/archived-messages',
 	'autocomplete',
 	'hooks',
 	'bootbox',
@@ -20,7 +21,7 @@ define('forum/chats', [
 	'uploadHelpers',
 ], function (
 	components, mousetrap, recentChats, create,
-	manage, messages, userList, messageSearch, pinnedMessages,
+	manage, messages, userList, messageSearch, pinnedMessages, archivedMessages,
 	autocomplete, hooks, bootbox, alerts, chatModule, api,
 	uploadHelpers
 ) {
@@ -125,6 +126,7 @@ define('forum/chats', [
 		Chats.addPublicRoomSortHandler();
 		Chats.addTooltipHandler(mainWrapper);
 		pinnedMessages.init(mainWrapper);
+		archivedMessages.init(mainWrapper);
 	};
 
 	Chats.addPublicRoomSortHandler = function () {
@@ -445,6 +447,12 @@ define('forum/chats', [
 					break;
 				case 'unpin':
 					pinnedMessages.unpin(messageId, roomId);
+					break;
+				case 'archive':
+					archivedMessages.archive(messageId, roomId);
+					break;
+				case 'unarchive':
+					archivedMessages.unarchive(messageId, roomId);
 					break;
 			}
 		});

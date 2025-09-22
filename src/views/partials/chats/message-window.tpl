@@ -38,6 +38,7 @@
 
 		<!-- IMPORT partials/chats/user-list.tpl -->
 		<!-- IMPORT partials/chats/pinned-messages.tpl -->
+		<!-- IMPORT partials/chats/archived-messages.tpl -->
 	</div>
 	{{{ end }}}
 </div>

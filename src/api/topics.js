@@ -160,6 +160,20 @@ topicsAPI.unpin = async function (caller, data) {
 	});
 };
 
+topicsAPI.archive = async function (caller, { tids, expiry }) {
+	await doTopicAction('pin', 'event:topic_archiveed', caller, { tids });
+
+	if (expiry) {
+		await Promise.all(tids.map(async tid => topics.tools.setPinExpiry(tid, expiry, caller.uid)));
+	}
+};
+
+topicsAPI.unarchive = async function (caller, data) {
+	await doTopicAction('unpin', 'event:topic_unarchived', caller, {
+		tids: data.tids,
+	});
+};
+
 topicsAPI.lock = async function (caller, data) {
 	await doTopicAction('lock', 'event:topic_locked', caller, {
 		tids: data.tids,

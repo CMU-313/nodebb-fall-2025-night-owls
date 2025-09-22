@@ -165,6 +165,12 @@ Chats.messages.getPinned = async (req, res) => {
 	helpers.formatApiResponse(200, res, await api.chats.getPinnedMessages(req, { start, ...req.params }));
 };
 
+Chats.messages.getArchived = async (req, res) => {
+	const { start } = req.query;
+
+	helpers.formatApiResponse(200, res, await api.chats.getArchivedMessages(req, { start, ...req.params }));
+};
+
 Chats.messages.get = async (req, res) => {
 	const { mid, roomId } = req.params;
 

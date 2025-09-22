@@ -40,6 +40,10 @@
 						<i class="fa fa-thumb-tack"></i>
 						<span>{{{ if !./pinExpiry }}}[[topic:pinned]]{{{ else }}}[[topic:pinned-with-expiry, {isoTimeToLocaleString(./pinExpiryISO, config.userLang)}]]{{{ end }}}</span>
 					</span>
+					<span component="topic/archived" class="badge border border-gray-300 text-body {{{ if (./scheduled || !./archived) }}}hidden{{{ end }}}">
+						<i class="fa fa-thumb-tack"></i>
+						<span>{{{ if !./pinExpiry }}}[[topic:archived]]{{{ else }}}[[topic:archived-with-expiry, {isoTimeToLocaleString(./pinExpiryISO, config.userLang)}]]{{{ end }}}</span>
+					</span>
 					<span component="topic/locked" class="badge border border-gray-300 text-body {{{ if !./locked }}}hidden{{{ end }}}">
 						<i class="fa fa-lock"></i>
 						<span>[[topic:locked]]</span>
