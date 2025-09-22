@@ -12,7 +12,7 @@ const intFields = [
 	'tid', 'cid', 'uid', 'mainPid', 'postcount',
 	'viewcount', 'postercount', 'followercount',
 	'deleted', 'locked', 'pinned', 'pinExpiry',
-	'timestamp', 'upvotes', 'downvotes',
+	'timestamp', 'upvotes', 'downvotes', 'anonymous',
 	'lastposttime', 'deleterUid',
 ];
 
@@ -104,6 +104,11 @@ function modifyTopic(topic, fields) {
 	}
 
 	escapeTitle(topic);
+
+	if (topic.hasOwnProperty('anonymous')) {
+		topic.anonymous = parseInt(topic.anonymous, 10) === 1;
+		topic.isAnonymous = topic.anonymous;
+	}
 
 	if (topic.hasOwnProperty('timestamp')) {
 		topic.timestampISO = utils.toISOString(topic.timestamp);

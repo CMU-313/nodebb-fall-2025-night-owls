@@ -239,6 +239,12 @@ TopicObjectSlim:
         timestampISO:
           type: string
           description: An ISO 8601 formatted date string (complementing `timestamp`)
+        anonymous:
+          type: boolean
+          description: Indicates whether the topic hides the author from regular users
+        isAnonymous:
+          type: boolean
+          description: Alias of `anonymous`, maintained for backwards compatibility
         lastposttime:
           type: number
         lastposttimeISO:
