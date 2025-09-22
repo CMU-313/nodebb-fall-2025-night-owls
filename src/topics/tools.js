@@ -112,11 +112,11 @@ module.exports = function (Topics) {
 
 	topicTools.archive = async function (tid, uid) {
 		return await toggleArchive(tid, uid, true);
-	}
+	};
 
 	topicTools.unarchive = async function (tid, uid) {
 		return await toggleArchive(tid, uid, false);
-	}
+	};
 
 	topicTools.setArchiveExpiry = async (tid, expiry, uid) => {
 		if (isNaN(parseInt(expiry, 10)) || expiry <= Date.now()) {

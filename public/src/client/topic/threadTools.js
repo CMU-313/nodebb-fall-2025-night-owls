@@ -395,7 +395,7 @@ define('forum/topic/threadTools', [
 		ajaxify.data.archived = data.archived;
 
 		posts.addTopicEvents(data.events);
-	}
+	};
 
 	ThreadTools.setDeleteState = function (data) {
 		const threadEl = components.get('topic');

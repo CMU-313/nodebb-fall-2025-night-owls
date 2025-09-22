@@ -187,7 +187,7 @@ module.exports = function (Topics) {
 		const { sortMap, fields } = await plugins.hooks.fire('filter:topics.sortOptions', {
 			params,
 			fields: [
-				'tid', 'timestamp', 'lastposttime', 'upvotes', 'downvotes', 'postcount', 'pinned', 'archived'
+				'tid', 'timestamp', 'lastposttime', 'upvotes', 'downvotes', 'postcount', 'pinned', 'archived',
 			],
 			sortMap: {
 				recent: sortRecent,

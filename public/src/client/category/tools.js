@@ -374,5 +374,53 @@ define('forum/category/tools', [
 		});
 	}
 
+	function handleArchivedTopicSort() {
+		if (!ajaxify.data.topics || !ajaxify.data.template.category) {
+			return;
+		}
+		const numArchived = ajaxify.data.topics.filter(topic => topic.archived).length;
+		if ((!app.user.isAdmin && !app.user.isMod) || numArchived < 2) {
+			return;
+		}
+
+		app.loadJQueryUI(function () {
+			const topicListEl = $('[component="category"]').filter(function (i, e) {
+				return !$(e).parents('[widget-area],[data-widget-area]').length;
+			});
+			let baseIndex = 0;
+			topicListEl.sortable({
+				axis: 'y',
+				handle: '[component="topic/archived"]',
+				items: '[component="category/topic"].archived',
+				start: function () {
+					baseIndex = parseInt(topicListEl.find('[component="category/topic"].archived').first().attr('data-index'), 10);
+				},
+				update: function (ev, ui) {
+					const tid = ui.item.attr('data-tid');
+					const archivedTopicEls = topicListEl.find('[component="category/topic"].archived');
+					let newIndex = 0;
+					archivedTopicEls.each((index, el) => {
+						if ($(el).attr('data-tid') === tid) {
+							newIndex = index;
+							return false;
+						}
+					});
+
+					socket.emit('topics.orderArchivedTopics', {
+						tid: tid,
+						order: baseIndex + newIndex,
+					}, function (err) {
+						if (err) {
+							return alerts.error(err);
+						}
+						archivedTopicEls.each((index, el) => {
+							$(el).attr('data-index', baseIndex + index);
+						});
+					});
+				},
+			});
+		});
+	}
+
 	return CategoryTools;
 });
