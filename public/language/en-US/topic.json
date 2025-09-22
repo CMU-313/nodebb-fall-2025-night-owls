@@ -102,6 +102,8 @@
     "thread-tools.unpin": "Unpin Topic",
     "thread-tools.lock": "Lock Topic",
     "thread-tools.unlock": "Unlock Topic",
+    "thread-tools.archive": "Archive Topic",
+    "thread-tools.unarchive": "Unarchive Topic",
     "thread-tools.move": "Move Topic",
     "thread-tools.move-posts": "Move Posts",
     "thread-tools.move-all": "Move All",

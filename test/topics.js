@@ -415,6 +415,7 @@ describe('Topic\'s', () => {
 				assert.strictEqual(topicData.deleted, 0);
 				assert.strictEqual(topicData.locked, 0);
 				assert.strictEqual(topicData.pinned, 0);
+				assert.strictEqual(topicData.archived, 0);
 				done();
 			});
 		});
@@ -464,6 +465,7 @@ describe('Topic\'s', () => {
 				assert.equal(data.deleted, false);
 				assert.equal(data.locked, false);
 				assert.equal(data.pinned, false);
+				assert.equal(data.archived, false);
 			});
 
 			it('should return first 3 posts including main post', async () => {
@@ -700,6 +702,18 @@ describe('Topic\'s', () => {
 			assert.strictEqual(pinned, 0);
 		});
 
+		it('should archive topic', async () => {
+			await apiTopics.archive({ uid: adminUid }, { tids: [newTopic.tid], cid: categoryObj.cid });
+			const archived = await topics.getTopicField(newTopic.tid, 'archived');
+			assert.strictEqual(archived, 1);
+		});
+
+		it('should unarchive topic', async () => {
+			await apiTopics.unarchive({ uid: adminUid }, { tids: [newTopic.tid], cid: categoryObj.cid });
+			const archived = await topics.getTopicField(newTopic.tid, 'archived');
+			assert.strictEqual(archived, 0);
+		});
+
 		it('should move all topics', (done) => {
 			socketTopics.moveAll({ uid: adminUid }, { cid: moveCid, currentCid: categoryObj.cid }, (err) => {
 				assert.ifError(err);
@@ -902,7 +916,79 @@ describe('Topic\'s', () => {
 			});
 		});
 	});
+	
+	describe('order archived topics', () => {
+		let tid1;
+		let tid2;
+		let tid3;
+		before(async () => {
+			async function createTopic() {
+				return (await topics.post({
+					uid: topic.userId,
+					title: 'topic for test',
+					content: 'topic content',
+					cid: topic.categoryId,
+				})).topicData.tid;
+			}
+			tid1 = await createTopic();
+			tid2 = await createTopic();
+			tid3 = await createTopic();
+			await topics.tools.archive(tid1, adminUid);
+			// artificial timeout so archive time is different on redis sometimes scores are indentical
+			await sleep(5);
+			await topics.tools.archive(tid2, adminUid);
+		});
 
+		const socketTopics = require('../src/socket.io/topics');
+		it('should error with invalid data', (done) => {
+			socketTopics.orderArchivedTopics({ uid: adminUid }, null, (err) => {
+				assert.equal(err.message, '[[error:invalid-data]]');
+				done();
+			});
+		});
+
+		it('should error with invalid data', (done) => {
+			socketTopics.orderArchivedTopics({ uid: adminUid }, [null, null], (err) => {
+				assert.equal(err.message, '[[error:invalid-data]]');
+				done();
+			});
+		});
+
+		it('should error with unprivileged user', (done) => {
+			socketTopics.orderArchivedTopics({ uid: 0 }, { tid: tid1, order: 1 }, (err) => {
+				assert.equal(err.message, '[[error:no-privileges]]');
+				done();
+			});
+		});
+
+		it('should not do anything if topics are not archived', (done) => {
+			socketTopics.orderArchivedTopics({ uid: adminUid }, { tid: tid3, order: 1 }, (err) => {
+				assert.ifError(err);
+				db.isSortedSetMember(`cid:${topic.categoryId}:tids:archived`, tid3, (err, isMember) => {
+					assert.ifError(err);
+					assert(!isMember);
+					done();
+				});
+			});
+		});
+
+		it('should order archived topics', (done) => {
+			db.getSortedSetRevRange(`cid:${topic.categoryId}:tids:archived`, 0, -1, (err, archivedTids) => {
+				assert.ifError(err);
+				assert.equal(archivedTids[0], tid2);
+				assert.equal(archivedTids[1], tid1);
+				socketTopics.orderArchivedTopics({ uid: adminUid }, { tid: tid1, order: 0 }, (err) => {
+					assert.ifError(err);
+					db.getSortedSetRevRange(`cid:${topic.categoryId}:tids:archived`, 0, -1, (err, archivedTids) => {
+						assert.ifError(err);
+						assert.equal(archivedTids[0], tid1);
+						assert.equal(archivedTids[1], tid2);
+						done();
+					});
+				});
+			});
+		});
+	});
 
 	describe('.ignore', () => {
 		let newTid;
@@ -2409,6 +2495,11 @@ describe('Topic\'s', () => {
 			assert.strictEqual(response.statusCode, 400);
 		});
 
+		it('should not allow to unarchive a scheduled topic', async () => {
+			const { response } = await request.delete(`${nconf.get('url')}/api/v3/topics/${topicData.tid}/archive`, adminApiOpts);
+			assert.strictEqual(response.statusCode, 400);
+		});
+
 		it('should not allow to restore a scheduled topic', async () => {
 			const { response } = await request.put(`${nconf.get('url')}/api/v3/topics/${topicData.tid}/state`, adminApiOpts);
 			assert.strictEqual(response.statusCode, 400);
@@ -2475,6 +2566,7 @@ describe('Topic\'s', () => {
 
 			topicData = await topics.getTopicData(topicData.tid);
 			assert(!topicData.pinned);
+			assert(!topicData.archived);
 			assert(!topicData.deleted);
 			// Should remove from topics:scheduled upon publishing
 			const score = await db.sortedSetScore('topics:scheduled', topicData.tid);

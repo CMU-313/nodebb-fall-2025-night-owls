@@ -110,6 +110,128 @@ module.exports = function (Topics) {
 		return topicData;
 	}
 
+	topicTools.archive = async function (tid, uid) {
+		return await toggleArchive(tid, uid, true);
+	}
+
+	topicTools.unarchive = async function (tid, uid) {
+		return await toggleArchive(tid, uid, false);
+	}
+
+	topicTools.setArchiveExpiry = async (tid, expiry, uid) => {
+		if (isNaN(parseInt(expiry, 10)) || expiry <= Date.now()) {
+			throw new Error('[[error:invalid-data]]');
+		}
+
+		const topicData = await Topics.getTopicFields(tid, ['tid', 'uid', 'cid']);
+		const isAdminOrMod = await privileges.categories.isAdminOrMod(topicData.cid, uid);
+		if (!isAdminOrMod) {
+			throw new Error('[[error:no-privileges]]');
+		}
+
+		await Topics.setTopicField(tid, 'archiveExpiry', expiry);
+		plugins.hooks.fire('action:topic.setArchiveExpiry', { topic: _.clone(topicData), uid: uid });
+	};
+
+	topicTools.checkArchiveExpiry = async (tids) => {
+		const expiry = (await topics.getTopicsFields(tids, ['archiveExpiry'])).map(obj => obj.archiveExpiry);
+		const now = Date.now();
+
+		tids = await Promise.all(tids.map(async (tid, idx) => {
+			if (expiry[idx] && parseInt(expiry[idx], 10) <= now) {
+				await toggleArchive(tid, 'system', false);
+				return null;
+			}
+
+			return tid;
+		}));
+
+		return tids.filter(Boolean);
+	};
+
+	async function toggleArchive(tid, uid, archive) {
+		const topicData = await Topics.getTopicData(tid);
+		if (!topicData) {
+			throw new Error('[[error:no-topic]]');
+		}
+
+		if (topicData.scheduled) {
+			throw new Error('[[error:cant-archive-scheduled]]');
+		}
+
+		if (uid !== 'system' && !await privileges.topics.isAdminOrMod(tid, uid)) {
+			throw new Error('[[error:no-privileges]]');
+		}
+
+		const promises = [
+			Topics.setTopicField(tid, 'archived', archive ? 1 : 0),
+			Topics.events.log(tid, { type: archive ? 'archive' : 'unarchive', uid }),
+		];
+		if (archive) {
+			promises.push(db.sortedSetAdd(`cid:${topicData.cid}:tids:archived`, Date.now(), tid));
+			promises.push(db.sortedSetsRemove([
+				`cid:${topicData.cid}:tids`,
+				`cid:${topicData.cid}:tids:create`,
+				`cid:${topicData.cid}:tids:posts`,
+				`cid:${topicData.cid}:tids:votes`,
+				`cid:${topicData.cid}:tids:views`,
+			], tid));
+		} else {
+			promises.push(db.sortedSetRemove(`cid:${topicData.cid}:tids:archived`, tid));
+			promises.push(Topics.deleteTopicField(tid, 'archiveExpiry'));
+			promises.push(db.sortedSetAddBulk([
+				[`cid:${topicData.cid}:tids`, topicData.lastposttime, tid],
+				[`cid:${topicData.cid}:tids:create`, topicData.timestamp, tid],
+				[`cid:${topicData.cid}:tids:posts`, topicData.postcount, tid],
+				[`cid:${topicData.cid}:tids:votes`, parseInt(topicData.votes, 10) || 0, tid],
+				[`cid:${topicData.cid}:tids:views`, topicData.viewcount, tid],
+			]));
+			topicData.archiveExpiry = undefined;
+			topicData.archiveExpiryISO = undefined;
+		}
+
+		const results = await Promise.all(promises);
+
+		topicData.isArchived = archive; // deprecate in v2.0
+		topicData.archived = archive;
+		topicData.events = results[1];
+
+		plugins.hooks.fire('action:topic.archive', { topic: _.clone(topicData), uid });
+
+		return topicData;
+	}
+
+	topicTools.orderArchivedTopics = async function (uid, data) {
+		const { tid, order } = data;
+		const cid = await Topics.getTopicField(tid, 'cid');
+
+		if (!cid || !tid || !utils.isNumber(order) || order < 0) {
+			throw new Error('[[error:invalid-data]]');
+		}
+
+		const isAdminOrMod = await privileges.categories.isAdminOrMod(cid, uid);
+		if (!isAdminOrMod) {
+			throw new Error('[[error:no-privileges]]');
+		}
+
+		const archivedTids = await db.getSortedSetRange(`cid:${cid}:tids:archived`, 0, -1);
+		const currentIndex = archivedTids.indexOf(String(tid));
+		if (currentIndex === -1) {
+			return;
+		}
+		const newOrder = archivedTids.length - order - 1;
+		// moves tid to index order in the array
+		if (archivedTids.length > 1) {
+			archivedTids.splice(Math.max(0, newOrder), 0, archivedTids.splice(currentIndex, 1)[0]);
+		}
+
+		await db.sortedSetAdd(
+			`cid:${cid}:tids:archived`,
+			archivedTids.map((tid, index) => index),
+			archivedTids
+		);
+	};
+
 	topicTools.pin = async function (tid, uid) {
 		return await togglePin(tid, uid, true);
 	};
