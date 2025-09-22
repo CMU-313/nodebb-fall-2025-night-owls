@@ -1,7 +1,18 @@
 'use strict';
 
-const db = require('../database');
-const Posts = require('./index');
+const winston = require('winston');
+const db = require('../src/database');
+const Posts = require('../src/posts');
+// const Posts = require('./index');
+
+winston.configure({
+	transports: [
+		new winston.transports.Console({
+			level: 'info',
+			format: winston.format.simple(),
+		}),
+	],
+});
 
 async function displayAllPosts() {
 	try {
