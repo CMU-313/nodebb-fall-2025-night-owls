@@ -9,7 +9,5 @@
   function searchTopics(event) {
     event.preventDefault();
     const query = document.getElementById("search-topics").value;
-    console.log("Searching for:", query);
-    alert("Searching for:" + query);
   }
 </script>
