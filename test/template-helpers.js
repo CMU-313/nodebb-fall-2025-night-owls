@@ -168,8 +168,9 @@ describe('helpers', () => {
 	});
 
 	it('should generate topic class', (done) => {
-		const className = helpers.generateTopicClass({ locked: true, pinned: true, deleted: true, unread: true });
-		assert.equal(className, 'locked pinned deleted unread');
+		const className = helpers.generateTopicClass({ locked: true, pinned: true, archived: true, deleted: true, 
+			unread: true });
+		assert.equal(className, 'locked pinned archived deleted unread');
 		done();
 	});
 

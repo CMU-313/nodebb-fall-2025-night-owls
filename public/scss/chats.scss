@@ -68,7 +68,7 @@ body.page-user-chats {
 					opacity: 0;
 					transition: $transition-fade;
 					&:has([aria-expanded="true"]) { opacity: 1; }
-					[data-action="restore"], [data-action="unpin"] { display: none; }
+					[data-action="restore"], [data-action="unpin"], [data-action="unarchive"] { display: none; }
 				}
 				&:hover {
 					.controls { opacity: 1;	}
@@ -85,6 +85,12 @@ body.page-user-chats {
 				.message-body-wrapper .controls {
 					[data-action="pin"] { display: none; }
 					[data-action="unpin"] { display: block;}
+				}
+			}
+			&.archived {
+				.message-body-wrapper .controls {
+					[data-action="archive"] { display: none; }
+					[data-action="unarchive"] { display: block;}
 				}
 			}
 		}
@@ -127,7 +133,7 @@ body.page-user-chats {
 	right: 2rem;
 	width: auto!important;
 	height: auto!important;
-	[component="chat/user/list/btn"], [component="chat/pinned/messages/btn"] {
+	[component="chat/user/list/btn"], [component="chat/pinned/messages/btn"], [component="chat/archived/messages/btn"] {
 		display: none!important;
 	}
 }

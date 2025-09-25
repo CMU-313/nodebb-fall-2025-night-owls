@@ -33,4 +33,35 @@ module.exports = function (Messaging) {
 		});
 		return messageData;
 	};
+
+	Messaging.archiveMessage = async (mid, roomId) => {
+		const isMessageInRoom = await db.isSortedSetMember(`chat:room:${roomId}:mids`, mid);
+		if (isMessageInRoom) {
+			await db.sortedSetAdd(`chat:room:${roomId}:mids:archived`, Date.now(), mid);
+			await Messaging.setMessageFields(mid, { archived: 1 });
+		}
+	};
+
+	Messaging.unarchivMessage = async (mid, roomId) => {
+		const isMessageInRoom = await db.isSortedSetMember(`chat:room:${roomId}:mids`, mid);
+		if (isMessageInRoom) {
+			await db.sortedSetRemove(`chat:room:${roomId}:mids:archived`, mid);
+			await Messaging.setMessageFields(mid, { archived: 0 });
+		}
+	};
+
+	Messaging.getArchivedMessages = async (roomId, uid, start, stop) => {
+		const mids = await db.getSortedSetRevRange(`chat:room:${roomId}:mids:archived`, start, stop);
+		if (!mids.length) {
+			return [];
+		}
+
+		const messageData = await Messaging.getMessagesData(mids, uid, roomId, true);
+		messageData.forEach((msg, i) => {
+			if (msg) {
+				msg.index = start + i;
+			}
+		});
+		return messageData;
+	};
 };

@@ -70,6 +70,9 @@ async function cleanTopic(progress) {
 			if (topic.hasOwnProperty('pinned') && parseInt(topic.pinned, 10) === 0) {
 				fieldsToDelete.push('pinned');
 			}
+			if (topic.hasOwnProperty('archived') && parseInt(topic.archived, 10) === 0) {
+				fieldsToDelete.push('archived');
+			}
 			if (topic.hasOwnProperty('locked') && parseInt(topic.locked, 10) === 0) {
 				fieldsToDelete.push('locked');
 			}

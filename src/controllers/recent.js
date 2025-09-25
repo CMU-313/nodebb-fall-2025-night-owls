@@ -55,6 +55,7 @@ recentController.getData = async function (req, url, sort) {
 		term: term,
 		sort: sort,
 		floatPinned: req.query.pinned,
+		floatArchived: req.query.archived,
 		query: req.query,
 	});
 

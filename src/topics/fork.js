@@ -142,7 +142,7 @@ module.exports = function (Topics) {
 	};
 
 	async function updateCategory(postData, toTid) {
-		const topicData = await Topics.getTopicsFields([postData.tid, toTid], ['cid', 'pinned']);
+		const topicData = await Topics.getTopicsFields([postData.tid, toTid], ['cid', 'pinned', 'archived']);
 
 		if (!topicData[0].cid || !topicData[1].cid) {
 			return;
@@ -152,6 +152,12 @@ module.exports = function (Topics) {
 			await db.sortedSetIncrBy(`cid:${topicData[0].cid}:tids:posts`, -1, postData.tid);
 		}
 		if (!topicData[1].pinned) {
+			await db.sortedSetIncrBy(`cid:${topicData[1].cid}:tids:posts`, 1, toTid);
+		}
+		if (!topicData[0].archived) {
+			await db.sortedSetIncrBy(`cid:${topicData[0].cid}:tids:posts`, -1, postData.tid);
+		}
+		if (!topicData[1].archived) {
 			await db.sortedSetIncrBy(`cid:${topicData[1].cid}:tids:posts`, 1, toTid);
 		}
 		if (topicData[0].cid === topicData[1].cid) {

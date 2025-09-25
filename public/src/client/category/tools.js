@@ -16,6 +16,7 @@ define('forum/category/tools', [
 		topicSelect.init(updateDropdownOptions);
 
 		handlePinnedTopicSort();
+		handleArchivedTopicSort();
 
 		$('[component="category/topic"]').each((index, el) => {
 			threadTools.observeTopicLabels($(el).find('[component="topic/labels"]'));
@@ -53,6 +54,16 @@ define('forum/category/tools', [
 
 		components.get('topic/unpin').on('click', function () {
 			categoryCommand('del', '/pin', 'unpin', onCommandComplete);
+			return false;
+		});
+
+		components.get('topic/archive').on('click', function () {
+			categoryCommand('put', '/archive', 'archive', onCommandComplete);
+			return false;
+		});
+
+		components.get('topic/unarchive').on('click', function () {
+			categoryCommand('del', '/archive', 'unarchive', onCommandComplete);
 			return false;
 		});
 
@@ -136,6 +147,8 @@ define('forum/category/tools', [
 		socket.on('event:topic_unlocked', setLockedState);
 		socket.on('event:topic_pinned', setPinnedState);
 		socket.on('event:topic_unpinned', setPinnedState);
+		socket.on('event:topic_archived', setArchivedState);
+		socket.on('event:topic_unarchived', setArchivedState);
 		socket.on('event:topic_moved', onTopicMoved);
 	};
 
@@ -168,6 +181,10 @@ define('forum/category/tools', [
 				threadTools.requestPinExpiry(body, execute.bind(null, true));
 				break;
 
+			case 'archive':
+				threadTools.requestArchiveExpiry(body, execute.bind(null, true));
+				break;
+
 			default:
 				execute(true);
 				break;
@@ -182,6 +199,8 @@ define('forum/category/tools', [
 		socket.removeListener('event:topic_unlocked', setLockedState);
 		socket.removeListener('event:topic_pinned', setPinnedState);
 		socket.removeListener('event:topic_unpinned', setPinnedState);
+		socket.removeListener('event:topic_archived', setArchivedState);
+		socket.removeListener('event:topic_unarchived', setArchivedState);
 		socket.removeListener('event:topic_moved', onTopicMoved);
 	};
 
@@ -210,6 +229,7 @@ define('forum/category/tools', [
 		const isAnyDeleted = isAny(isTopicDeleted, tids);
 		const areAllDeleted = areAll(isTopicDeleted, tids);
 		const isAnyPinned = isAny(isTopicPinned, tids);
+		const isAnyArchived = isAny(isTopicArchived, tids);
 		const isAnyLocked = isAny(isTopicLocked, tids);
 		const isAnyScheduled = isAny(isTopicScheduled, tids);
 		const areAllScheduled = areAll(isTopicScheduled, tids);
@@ -223,6 +243,9 @@ define('forum/category/tools', [
 
 		components.get('topic/pin').toggleClass('hidden', areAllScheduled || isAnyPinned);
 		components.get('topic/unpin').toggleClass('hidden', areAllScheduled || !isAnyPinned);
+
+		components.get('topic/archive').toggleClass('hidden', areAllScheduled || isAnyArchived);
+		components.get('topic/unarchive').toggleClass('hidden', areAllScheduled || !isAnyArchived);
 
 		components.get('topic/merge').toggleClass('hidden', isAnyScheduled);
 	}
@@ -257,6 +280,10 @@ define('forum/category/tools', [
 		return getTopicEl(tid).hasClass('pinned');
 	}
 
+	function isTopicArchived(tid) {
+		return getTopicEl(tid).hasClass('archived');
+	}
+
 	function isTopicScheduled(tid) {
 		return getTopicEl(tid).hasClass('scheduled');
 	}
@@ -275,6 +302,13 @@ define('forum/category/tools', [
 		const topic = getTopicEl(data.tid);
 		topic.toggleClass('pinned', data.isPinned);
 		topic.find('[component="topic/pinned"]').toggleClass('hidden', !data.isPinned);
+		ajaxify.refresh();
+	}
+
+	function setArchivedState(data) {
+		const topic = getTopicEl(data.tid);
+		topic.toggleClass('archived', data.isArchived);
+		topic.find('[component="topic/archived"]').toggleClass('hidden', !data.isArchived);
 		ajaxify.refresh();
 	}
 
@@ -332,6 +366,54 @@ define('forum/category/tools', [
 							return alerts.error(err);
 						}
 						pinnedTopicEls.each((index, el) => {
+							$(el).attr('data-index', baseIndex + index);
+						});
+					});
+				},
+			});
+		});
+	}
+
+	function handleArchivedTopicSort() {
+		if (!ajaxify.data.topics || !ajaxify.data.template.category) {
+			return;
+		}
+		const numArchived = ajaxify.data.topics.filter(topic => topic.archived).length;
+		if ((!app.user.isAdmin && !app.user.isMod) || numArchived < 2) {
+			return;
+		}
+
+		app.loadJQueryUI(function () {
+			const topicListEl = $('[component="category"]').filter(function (i, e) {
+				return !$(e).parents('[widget-area],[data-widget-area]').length;
+			});
+			let baseIndex = 0;
+			topicListEl.sortable({
+				axis: 'y',
+				handle: '[component="topic/archived"]',
+				items: '[component="category/topic"].archived',
+				start: function () {
+					baseIndex = parseInt(topicListEl.find('[component="category/topic"].archived').first().attr('data-index'), 10);
+				},
+				update: function (ev, ui) {
+					const tid = ui.item.attr('data-tid');
+					const archivedTopicEls = topicListEl.find('[component="category/topic"].archived');
+					let newIndex = 0;
+					archivedTopicEls.each((index, el) => {
+						if ($(el).attr('data-tid') === tid) {
+							newIndex = index;
+							return false;
+						}
+					});
+
+					socket.emit('topics.orderArchivedTopics', {
+						tid: tid,
+						order: baseIndex + newIndex,
+					}, function (err) {
+						if (err) {
+							return alerts.error(err);
+						}
+						archivedTopicEls.each((index, el) => {
 							$(el).attr('data-index', baseIndex + index);
 						});
 					});

@@ -259,6 +259,10 @@ define('forum/topic/threadTools', [
 				ThreadTools.requestPinExpiry(body, execute.bind(null, true));
 				break;
 
+			case 'archive':
+				ThreadTools.requestArchiveExpiry(body, execute.bind(null, true));
+				break;
+
 			default:
 				execute(true);
 				break;
@@ -328,6 +332,67 @@ define('forum/topic/threadTools', [
 		$('[component="topic/labels"] [component="topic/locked"]').toggleClass('hidden', !data.isLocked);
 		$('[component="post/tools"] .dropdown-menu').html('');
 		ajaxify.data.locked = data.isLocked;
+
+		posts.addTopicEvents(data.events);
+	};
+
+	ThreadTools.requestArchiveExpiry = function (body, onSuccess) {
+		app.parseAndTranslate('modals/set-archive-expiry', {}, function (html) {
+			const modal = bootbox.dialog({
+				title: '[[topic:thread-tools.archive]]',
+				message: html,
+				onEscape: true,
+				buttons: {
+					cancel: {
+						label: '[[modules:bootbox.cancel]]',
+						className: 'btn-link',
+					},
+					save: {
+						label: '[[global:save]]',
+						className: 'btn-primary',
+						callback: function () {
+							const expiryDateEl = modal.get(0).querySelector('#expiry-date');
+							const expiryTimeEl = modal.get(0).querySelector('#expiry-time');
+							let expiryDate = expiryDateEl.value;
+							let expiryTime = expiryTimeEl.value;
+							// No expiry set
+							if (expiryDate === '' && expiryTime === '') {
+								return onSuccess();
+							}
+							expiryDate = expiryDate || new Date().toDateString();
+							expiryTime = expiryTime || new Date().toTimeString();
+							const date = new Date(`${expiryDate} ${expiryTime}`);
+							if (date.getTime() > Date.now()) {
+								body.expiry = date.getTime();
+								onSuccess();
+							} else {
+								alerts.error('[[error:invalid-date]]');
+							}
+						},
+					},
+				},
+			});
+		});
+	};
+	
+	ThreadTools.setArchivedState = function (data) {
+		const threadEl = components.get('topic');
+		if (String(data.tid) !== threadEl.attr('data-tid')) {
+			return;
+		}
+
+		components.get('topic/archive').toggleClass('hidden', data.archived).parent().attr('hidden', data.archived ? '' : null);
+		components.get('topic/unarchive').toggleClass('hidden', !data.archived).parent().attr('hidden', !data.archived ? '' : null);
+		const icon = $('[component="topic/labels"] [component="topic/archived"]');
+		icon.toggleClass('hidden', !data.archived);
+		if (data.archived) {
+			icon.translateAttr('title', (
+				data.archiveExpiry && data.archiveExpiryISO ?
+					'[[topic:archived-with-expiry, ' + data.archiveExpiryISO + ']]' :
+					'[[topic:archived]]'
+			));
+		}
+		ajaxify.data.archived = data.archived;
 
 		posts.addTopicEvents(data.events);
 	};

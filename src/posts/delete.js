@@ -29,7 +29,7 @@ module.exports = function (Posts) {
 			deleterUid: isDeleting ? uid : 0,
 		});
 		const postData = await Posts.getPostFields(pid, ['pid', 'tid', 'uid', 'content', 'timestamp', 'deleted']);
-		const topicData = await topics.getTopicFields(postData.tid, ['tid', 'cid', 'pinned']);
+		const topicData = await topics.getTopicFields(postData.tid, ['tid', 'cid', 'pinned', 'archived']);
 		postData.cid = topicData.cid;
 		await Promise.all([
 			topics.updateLastPostTimeFromLastPid(postData.tid),
@@ -55,7 +55,7 @@ module.exports = function (Posts) {
 			return;
 		}
 		const uniqTids = _.uniq(postData.map(p => p.tid));
-		const topicData = await topics.getTopicsFields(uniqTids, ['tid', 'cid', 'pinned', 'postcount']);
+		const topicData = await topics.getTopicsFields(uniqTids, ['tid', 'cid', 'pinned', 'archived', 'postcount']);
 		const tidToTopic = _.zipObject(uniqTids, topicData);
 
 		postData.forEach((p) => {
@@ -123,6 +123,9 @@ module.exports = function (Posts) {
 				const newPostCount = topicData.postcount - posts.length;
 				topicPostCountTasks.push(['topics:posts', newPostCount, tid]);
 				if (!topicData.pinned) {
+					zsetIncrBulk.push([`cid:${topicData.cid}:tids:posts`, -posts.length, tid]);
+				}
+				if (!topicData.archived) {
 					zsetIncrBulk.push([`cid:${topicData.cid}:tids:posts`, -posts.length, tid]);
 				}
 			}

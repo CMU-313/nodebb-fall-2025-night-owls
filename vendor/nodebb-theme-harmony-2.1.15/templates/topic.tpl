@@ -29,12 +29,15 @@
 				</h1>
 
 				<div class="topic-info d-flex gap-2 align-items-center flex-wrap {{{ if config.theme.centerHeaderElements }}}justify-content-center{{{ end }}}">
-					<span component="topic/labels" class="d-flex gap-2 {{{ if (!scheduled && (!pinned && (!locked && (!icons.length && (!oldCid || (oldCid == "-1")))))) }}}hidden{{{ end }}}">
+					<span component="topic/labels" class="d-flex gap-2 {{{ if (!scheduled && (!pinned && (!locked && (!archived && (!icons.length && (!oldCid || (oldCid == "-1"))))))) }}}hidden{{{ end }}}">
 						<span component="topic/scheduled" class="badge badge border border-gray-300 text-body {{{ if !scheduled }}}hidden{{{ end }}}">
 							<i class="fa fa-clock-o"></i> [[topic:scheduled]]
 						</span>
 						<span component="topic/pinned" class="badge badge border border-gray-300 text-body {{{ if (scheduled || !pinned) }}}hidden{{{ end }}}">
 							<i class="fa fa-thumb-tack"></i> {{{ if !pinExpiry }}}[[topic:pinned]]{{{ else }}}[[topic:pinned-with-expiry, {isoTimeToLocaleString(./pinExpiryISO, config.userLang)}]]{{{ end }}}
+						</span>
+						<span component="topic/archived" class="badge badge border border-gray-300 text-body {{{ if (scheduled || !archived) }}}hidden{{{ end }}}">
+							<i class="fa fa-thumb-tack"></i> {{{ if !archiveExpiry }}}[[topic:archived]]{{{ else }}}[[topic:archived-with-expiry, {isoTimeToLocaleString(./archiveExpiryISO, config.userLang)}]]{{{ end }}}
 						</span>
 						<span component="topic/locked" class="badge badge border border-gray-300 text-body {{{ if !locked }}}hidden{{{ end }}}">
 							<i class="fa fa-lock"></i> [[topic:locked]]

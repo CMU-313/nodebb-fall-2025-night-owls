@@ -23,6 +23,10 @@ module.exports = function (Categories) {
 		await async.eachLimit(pinnedTids, 10, async (tid) => {
 			await topics.purgePostsAndTopic(tid, uid);
 		});
+		const archivedTids = await db.getSortedSetRevRange(`cid:${cid}:tids:archived`, 0, -1);
+		await async.eachLimit(archivedTids, 10, async (tid) => {
+			await topics.purgePostsAndTopic(tid, uid);
+		});
 		const categoryData = await Categories.getCategoryData(cid);
 		await purgeCategory(cid, categoryData);
 		plugins.hooks.fire('action:category.delete', { cid: cid, uid: uid, category: categoryData });
@@ -44,6 +48,7 @@ module.exports = function (Categories) {
 		await db.deleteAll([
 			`cid:${cid}:tids`,
 			`cid:${cid}:tids:pinned`,
+			`cid:${cid}:tids:archived`,
 			`cid:${cid}:tids:posts`,
 			`cid:${cid}:tids:votes`,
 			`cid:${cid}:tids:views`,

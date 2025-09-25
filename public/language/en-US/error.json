@@ -110,6 +110,7 @@
     "scheduling-to-past": "Please select a date in the future.",
     "invalid-schedule-date": "Please enter a valid date and time.",
     "cant-pin-scheduled": "Scheduled topics cannot be (un)pinned.",
+    "cant-archive-scheduled": "Scheduled topics cannot be (un)archived.",
     "cant-merge-scheduled": "Scheduled topics cannot be merged.",
     "cant-move-posts-to-scheduled": "Can't move posts to a scheduled topic.",
     "cant-move-from-scheduled-to-existing": "Can't move posts from a scheduled topic to an existing topic.",
