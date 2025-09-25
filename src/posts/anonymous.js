@@ -28,18 +28,33 @@ module.exports = function (Posts) {
 		return buildAnonymousUser();
 	};
 
-	Posts.applyAnonymousState = function (post) {
+	Posts.applyAnonymousState = function (post, options = {}) {
 		if (!post) {
 			return post;
 		}
 		const isAnonymous = typeof post.anonymous === 'boolean' ? post.anonymous : parseInt(post.anonymous, 10) === 1;
 		if (!isAnonymous) {
+			post.anonymousOriginalUser = undefined;
 			return post;
 		}
 
 		post.anonymous = true;
 		post.isAnonymous = true;
 		post.handle = undefined;
+
+		const { canViewAnonymousOwner = false, originalUser } = options;
+		const realUser = originalUser || post.user;
+		if (canViewAnonymousOwner && realUser) {
+			post.anonymousOriginalUser = {
+				uid: realUser.uid,
+				username: realUser.username,
+				displayname: realUser.displayname,
+				userslug: realUser.userslug,
+				picture: realUser.picture,
+			};
+		} else {
+			post.anonymousOriginalUser = undefined;
+		}
 
 		const anonymousUser = buildAnonymousUser();
 		post.user = anonymousUser;

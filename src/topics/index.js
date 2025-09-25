@@ -162,7 +162,10 @@ Topics.getTopicsByTids = async function (tids, options) {
 	return hookResult.topics;
 };
 
-Topics.getTopicWithPosts = async function (topicData, set, uid, start, stop, reverse) {
+Topics.getTopicWithPosts = async function (topicData, set, uid, start, stop, reverse, options = {}) {
+	const userPrivileges = options.privileges || (topicData ? await privileges.topics.get(topicData.tid, uid) : null);
+	const canViewAnonymousOwner = Boolean(userPrivileges && userPrivileges.isAdminOrMod);
+
 	const [
 		posts,
 		category,
@@ -178,7 +181,7 @@ Topics.getTopicWithPosts = async function (topicData, set, uid, start, stop, rev
 		thumbs,
 		events,
 	] = await Promise.all([
-		Topics.getTopicPosts(topicData, set, start, stop, uid, reverse),
+		Topics.getTopicPosts(topicData, set, start, stop, uid, reverse, { canViewAnonymousOwner }),
 		categories.getCategoryData(topicData.cid),
 		categories.getTagWhitelist([topicData.cid]),
 		plugins.hooks.fire('filter:topic.thread_tools', { topic: topicData, uid: uid, tools: [] }),

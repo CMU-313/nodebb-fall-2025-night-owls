@@ -39,7 +39,9 @@ module.exports = function (SocketTopics) {
 		start = Math.max(0, start);
 		stop = Math.max(0, stop);
 		const [posts, postSharing] = await Promise.all([
-			topics.getTopicPosts(topicData, set, start, stop, socket.uid, reverse),
+			topics.getTopicPosts(topicData, set, start, stop, socket.uid, reverse, {
+				canViewAnonymousOwner: Boolean(userPrivileges.isAdminOrMod),
+			}),
 			social.getActivePostSharing(),
 		]);
 

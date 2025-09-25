@@ -690,12 +690,17 @@ Flags.getTarget = async function (type, id, uid) {
 		return userData && userData.uid ? userData : {};
 	}
 	if (type === 'post') {
-		let postData = await posts.getPostData(id);
+		const [rawPostData, postPrivileges] = await Promise.all([
+			posts.getPostData(id),
+			privileges.posts.get([id], uid),
+		]);
+		let postData = rawPostData;
 		if (!postData) {
 			return {};
 		}
 		postData = await posts.parsePost(postData);
-		postData = await topics.addPostData([postData], uid);
+		const canViewAnonymousOwner = Array.isArray(postPrivileges) && postPrivileges[0] && postPrivileges[0].isAdminOrMod;
+		postData = await topics.addPostData([postData], uid, { canViewAnonymousOwner });
 		return postData[0];
 	}
 	throw new Error('[[error:invalid-data]]');

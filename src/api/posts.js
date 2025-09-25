@@ -574,7 +574,8 @@ postsAPI.getReplies = async (caller, { pid }) => {
 		posts.getPostsByPids(pids, uid),
 		privileges.posts.get(pids, uid),
 	]);
-	postData = await topics.addPostData(postData, uid);
+	const viewerIsAdminOrMod = postPrivileges.some(priv => priv && priv.isAdminOrMod);
+	postData = await topics.addPostData(postData, uid, { canViewAnonymousOwner: viewerIsAdminOrMod });
 	postData.forEach((postData, index) => posts.modifyPostByPrivilege(postData, postPrivileges[index]));
 	postData = postData.filter((postData, index) => postData && postPrivileges[index].read);
 	postData = await user.blocks.filter(uid, postData);
