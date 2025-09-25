@@ -1,7 +1,13 @@
 'use strict';
 
+
+
+
 const winston = require('winston');
 const nconf = require('nconf');
+
+
+
 
 const db = require('../database');
 const batch = require('../batch');
@@ -13,9 +19,18 @@ const plugins = require('../plugins');
 const emailer = require('../emailer');
 const utils = require('../utils');
 
+
+
+
 const Digest = module.exports;
 
+
+
+
 const baseUrl = nconf.get('base_url');
+
+
+
 
 Digest.execute = async function (payload) {
 	const digestsDisabled = meta.config.disableEmailSubscriptions === 1;
@@ -44,6 +59,9 @@ Digest.execute = async function (payload) {
 	}
 };
 
+
+
+
 Digest.getUsersInterval = async (uids) => {
 	// Checks whether user specifies digest setting, or false for system default setting
 	let single = false;
@@ -52,13 +70,22 @@ Digest.getUsersInterval = async (uids) => {
 		single = true;
 	}
 
+
+
+
 	const settings = await db.getObjects(uids.map(uid => `user:${uid}:settings`));
 	const interval = uids.map((uid, index) => (settings[index] && settings[index].dailyDigestFreq) || false);
 	return single ? interval[0] : interval;
 };
 
+
+
+
 Digest.getSubscribers = async function (interval) {
 	let subscribers = [];
+
+
+
 
 	await batch.processSortedSet('users:joindate', async (uids) => {
 		const settings = await user.getMultipleUserSettings(uids);
@@ -75,6 +102,9 @@ Digest.getSubscribers = async function (interval) {
 		batch: 500,
 	});
 
+
+
+
 	const results = await plugins.hooks.fire('filter:digest.subscribers', {
 		interval: interval,
 		subscribers: subscribers,
@@ -82,7 +112,30 @@ Digest.getSubscribers = async function (interval) {
 	return results.subscribers;
 };
 
+function formatNotifications(notifs) {
+	return notifs.filter(Boolean).map((n) => {
+		if (n.image && !n.image.startsWith('http')) {
+			n.image = baseUrl + n.image;
+		}
+		if (n.path) {
+			n.notification_url = n.path.startsWith('http') ? n.path : baseUrl + n.path;
+		}
+		return n;
+	});
+}
+
+
+
+
+
+
+
+
 Digest.send = async function (data) {
+
+
+
+
 	let emailsSent = 0;
 	if (!data || !data.subscribers || !data.subscribers.length) {
 		return emailsSent;
@@ -109,20 +162,40 @@ Digest.send = async function (data) {
 			]);
 			const unreadNotifs = notifications.filter(Boolean);
 			// If there are no notifications and no new topics and no unread chats, don't bother sending a digest
-			if (!unreadNotifs.length &&
-				!topics.top.length && !topics.popular.length && !topics.recent.length &&
-				!publicRooms.length) {
+            
+            
+			if (!(userSetting && topics.top.length && topics.popular.length && topics.recent.length && publicRooms.length)) {
 				return;
 			}
 
-			unreadNotifs.forEach((n) => {
-				if (n.image && !n.image.startsWith('http')) {
-					n.image = baseUrl + n.image;
-				}
-				if (n.path) {
-					n.notification_url = n.path.startsWith('http') ? n.path : baseUrl + n.path;
-				}
-			});
+
+
+
+
+
+
+
+
+
+
+
+			// Format notifications
+
+
+
+
+			formatNotifications(unreadNotifs);
+
+
+
+
+
+
+
+
+
+
+
 
 			emailsSent += 1;
 			await emailer.send('digest', userObj.uid, {
@@ -155,6 +228,9 @@ Digest.send = async function (data) {
 	return emailsSent;
 };
 
+
+
+
 Digest.getDeliveryTimes = async (start, stop) => {
 	const count = await db.sortedSetCard('users:joindate');
 	const uids = await user.getUidsFromSet('users:joindate', start, stop);
@@ -162,12 +238,18 @@ Digest.getDeliveryTimes = async (start, stop) => {
 		return [];
 	}
 
+
+
+
 	const [scores, settings] = await Promise.all([
 		// Grab the last time a digest was successfully delivered to these uids
 		db.sortedSetScores('digest:delivery', uids),
 		// Get users' digest settings
 		Digest.getUsersInterval(uids),
 	]);
+
+
+
 
 	// Populate user data
 	let userData = await user.getUsersFields(uids, ['username', 'picture']);
@@ -177,11 +259,17 @@ Digest.getDeliveryTimes = async (start, stop) => {
 		return user;
 	});
 
+
+
+
 	return {
 		users: userData,
 		count: count,
 	};
 };
+
+
+
 
 async function getTermTopics(term, uid) {
 	const data = await topics.getSortedTopics({
@@ -194,11 +282,17 @@ async function getTermTopics(term, uid) {
 	});
 	data.topics = data.topics.filter(topic => topic && !topic.deleted);
 
+
+
+
 	const popular = data.topics
 		.filter(t => t.postcount > 1)
 		.sort((a, b) => b.postcount - a.postcount)
 		.slice(0, 10);
 	const popularTids = popular.map(t => t.tid);
+
+
+
 
 	const top = data.topics
 		.filter(t => t.votes > 0 && !popularTids.includes(t.tid))
@@ -206,10 +300,16 @@ async function getTermTopics(term, uid) {
 		.slice(0, 10);
 	const topTids = top.map(t => t.tid);
 
+
+
+
 	const recent = data.topics
 		.filter(t => !topTids.includes(t.tid) && !popularTids.includes(t.tid))
 		.sort((a, b) => b.lastposttime - a.lastposttime)
 		.slice(0, 10);
+
+
+
 
 	[...top, ...popular, ...recent].forEach((topicObj) => {
 		if (topicObj) {
@@ -226,6 +326,9 @@ async function getTermTopics(term, uid) {
 	});
 	return { top, popular, recent };
 }
+
+
+
 
 async function getUnreadPublicRooms(uid) {
 	const publicRooms = await messaging.getPublicRooms(uid, uid);
