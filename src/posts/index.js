@@ -114,7 +114,7 @@ Posts.getAllContent = async function () {
 		contents.push(post.content);
 	};
 
-
+	//console.log(contents);
 	return contents;
 };
 

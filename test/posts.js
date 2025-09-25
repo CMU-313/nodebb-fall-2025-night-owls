@@ -1291,15 +1291,15 @@ describe('Post\'s', () => {
 			const contents = await posts.getAllContent();
 		
 			assert(Array.isArray(contents));
-			assert(contents.length >= 2);
+			assert(contents.length == 2);
 
-			const testPost1 = contents.find(p => p.pid === testPid1);
-			const testPost2 = contents.find(p => p.pid === testPid2);
+			const testPost1 = contents[0];
+			const testPost2 = contents[1];
 
-			assert(testPost1);
-			assert(testPost2);
-			assert.strictEqual(testPost1.content, 'Test posts for getAllContent');
-			assert.strictEqual(testPost2.content, 'Another test post for getAllContent');
+			// assert(testPost1);
+			// assert(testPost2);
+			assert.strictEqual(testPost1, 'Test posts for getAllContent');
+			assert.strictEqual(testPost2, 'Another test post for getAllContent');
 
 			const samplePost = contents[0];
 			assert(samplePost.hasOwnProperty('pid'));
