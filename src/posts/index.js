@@ -105,19 +105,29 @@ Posts.modifyPostByPrivilege = function (post, privileges) {
 };
 
 Posts.getAllContent = async function () {
-	console.log('Attempt');
-	try {
-		// Get all post IDs from the posts sorted set
-		const pids = await Posts.getPidsFromSet('posts:pid', 0, -1);
+	//console.log('Attempt');
+	// try {
+	// // Get all post IDs from the posts sorted set
+	// const pids = await Posts.getPidsFromSet('posts:pid', 0, -1);
         
-		// Get the full post data using existing getPostsByPids function
-		const posts = await Posts.getPostsData(pids);
+	// // Get the full post data using existing getPostsByPids function
+	// const posts = await Posts.getPostsData(pids);
         
-		return posts;
-	} catch (err) {
-		console.error('Error getting all posts:', err);
-		throw err;
-	}
+	// return posts;
+	// } catch (err) {
+	// console.error('Error getting all posts:', err);
+	// throw err;
+	// }
+	const pids = await Posts.getPidsFromSet('posts:pid', 0, -1);
+	const posts = await Posts.getPostsData(pids);
+	const contents = [];
+
+	for (const post of posts) {
+		contents.push(post.content);
+	};
+
+
+	return contents;
 };
 
 
