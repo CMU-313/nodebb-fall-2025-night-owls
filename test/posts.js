@@ -6,6 +6,9 @@ const assert = require('assert');
 const nconf = require('nconf');
 const path = require('path');
 const util = require('util');
+//new line to create posts object
+const Posts = require('../src/posts');
+
 
 const sleep = util.promisify(setTimeout);
 

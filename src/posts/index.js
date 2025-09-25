@@ -104,13 +104,14 @@ Posts.modifyPostByPrivilege = function (post, privileges) {
 	}
 };
 
-Posts.getAllPosts = async function (uid) {
+Posts.getAllContent = async function () {
+	console.log('Attempt');
 	try {
 		// Get all post IDs from the posts sorted set
 		const pids = await Posts.getPidsFromSet('posts:pid', 0, -1);
         
 		// Get the full post data using existing getPostsByPids function
-		const posts = await Posts.getPostsByPids(pids, uid);
+		const posts = await Posts.getPostsData(pids);
         
 		return posts;
 	} catch (err) {
@@ -118,5 +119,6 @@ Posts.getAllPosts = async function (uid) {
 		throw err;
 	}
 };
+
 
 require('../promisify')(Posts);
