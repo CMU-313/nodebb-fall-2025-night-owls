@@ -5,16 +5,9 @@ const db = require('../src/database');
 const Posts = require('../src/posts');
 // const Posts = require('./index');
 
-winston.configure({
-	transports: [
-		new winston.transports.Console({
-			level: 'info',
-			format: winston.format.simple(),
-		}),
-	],
-});
 
-async function displayAllPosts() {
+
+async function getAllPosts() {
 	try {
 		// Initialize database
 		await db.init();
@@ -41,4 +34,4 @@ async function displayAllPosts() {
 	}
 }
 
-displayAllPosts();
+getAllPosts();
