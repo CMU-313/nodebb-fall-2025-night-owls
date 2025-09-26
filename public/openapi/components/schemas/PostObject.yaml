@@ -32,6 +32,12 @@ PostObject:
       type: number
     downvotes:
       type: number
+    anonymous:
+      type: boolean
+      description: Indicates whether the post hides the author's identity from regular users
+    isAnonymous:
+      type: boolean
+      description: Alias of `anonymous` retained for backwards compatibility
     votes:
       type: number
     timestampISO:
@@ -180,6 +186,10 @@ PostDataObject:
           type: number
         downvotes:
           type: number
+        anonymous:
+          type: boolean
+        isAnonymous:
+          type: boolean
         announces:
           type: number
         bookmarks:
