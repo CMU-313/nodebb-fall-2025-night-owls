@@ -26,6 +26,7 @@ require('./bookmarks')(Posts);
 require('./queue')(Posts);
 require('./diffs')(Posts);
 require('./uploads')(Posts);
+require('./anonymous')(Posts);
 
 Posts.attachments = require('./attachments');
 
@@ -120,3 +121,4 @@ Posts.getAllContent = async function () {
 
 
 require('../promisify')(Posts);
+

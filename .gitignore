@@ -75,3 +75,6 @@ test.sh
 
 .docker/**
 !**/.gitkeep
+
+# Personal development instructions
+.github/personal-instructions.md

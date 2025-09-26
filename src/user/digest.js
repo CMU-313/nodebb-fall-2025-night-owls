@@ -112,9 +112,6 @@ Digest.getSubscribers = async function (interval) {
 	return results.subscribers;
 };
 
-
-
-
 function formatNotifications(notifs) {
 	return notifs.filter(Boolean).map((n) => {
 		if (n.image && !n.image.startsWith('http')) {

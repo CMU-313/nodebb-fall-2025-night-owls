@@ -139,6 +139,7 @@
 	"language": "Language",
 
 	"guest": "Guest",
+	"anonymous": "Anonymous",
 	"guests": "Guests",
 	"former-user": "A Former User",
 	"system-user": "System",
