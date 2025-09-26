@@ -1292,12 +1292,12 @@ describe('Post\'s', () => {
 		
 			assert(Array.isArray(contents));
 			assert(contents.length == 30);
-			console.log('Length: ' + contents.length);
-			let string = '';
-			contents.forEach((content)=> {
-				string += content[1] + '\n';
-			});
-			console.log('All content posts: ' + string);
+			// console.log('Length: ' + contents.length);
+			// let string = '';
+			// contents.forEach((content)=> {
+			// string += content[1] + '\n';
+			// });
+			// console.log('All content posts: ' + string);
 
 
 			const testPost1 = contents[28];
