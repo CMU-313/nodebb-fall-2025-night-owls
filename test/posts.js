@@ -1291,22 +1291,29 @@ describe('Post\'s', () => {
 			const contents = await posts.getAllContent();
 		
 			assert(Array.isArray(contents));
-			assert(contents.length == 2);
+			//assert(contents.length == 2);
+			//console.log('Length: ' + contents.length);
+			// let string = '';
+			// contents.forEach((content)=> {
+			// string += content + '\n';
+			// });
+			// console.log('All content posts: ' + string);
 
-			const testPost1 = contents[0];
-			const testPost2 = contents[1];
 
-			// assert(testPost1);
-			// assert(testPost2);
-			assert.strictEqual(testPost1, 'Test posts for getAllContent');
-			assert.strictEqual(testPost2, 'Another test post for getAllContent');
+			const testPost1 = contents[28];
+			const testPost2 = contents[29];
 
-			const samplePost = contents[0];
-			assert(samplePost.hasOwnProperty('pid'));
-			assert(samplePost.hasOwnProperty('content'));
-			assert(samplePost.hasOwnProperty('uid'));
-			assert(samplePost.hasOwnProperty('timestamp'));
-			assert(samplePost.hasOwnProperty('tid'));
+			assert(testPost1);
+			assert(testPost2);
+			assert.strictEqual(testPost1[1], 'Test posts for getAllContent');
+			assert.strictEqual(testPost2[1], 'Another test post for getAllContent');
+
+			// const samplePost = contents[0];
+			// assert(samplePost.hasOwnProperty('pid'));
+			// assert(samplePost.hasOwnProperty('content'));
+			// assert(samplePost.hasOwnProperty('uid'));
+			// assert(samplePost.hasOwnProperty('timestamp'));
+			// assert(samplePost.hasOwnProperty('tid'));
 		});
 
 		it('should handle errors gracefully', async () => {

@@ -111,7 +111,7 @@ Posts.getAllContent = async function () {
 	const contents = [];
 
 	for (const post of posts) {
-		contents.push(post.content);
+		contents.push([post.pid, post.content]); //both
 	};
 
 	//console.log(contents);
