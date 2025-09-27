@@ -22,7 +22,7 @@ module.exports = function (Topics) {
 		await Topics.addPostToTopic(postData.tid, postData);
 	};
 
-	Topics.getTopicPosts = async function (topicData, set, start, stop, uid, reverse) {
+	Topics.getTopicPosts = async function (topicData, set, start, stop, uid, reverse, options = {}) {
 		if (!topicData) {
 			return [];
 		}
@@ -72,7 +72,9 @@ module.exports = function (Topics) {
 		const result = await plugins.hooks.fire('filter:topic.getPosts', {
 			topic: topicData,
 			uid: uid,
-			posts: await Topics.addPostData(postData, uid),
+			posts: await Topics.addPostData(postData, uid, {
+				canViewAnonymousOwner: Boolean(options.canViewAnonymousOwner),
+			}),
 		});
 		return result.posts;
 	};
@@ -105,7 +107,7 @@ module.exports = function (Topics) {
 		}
 	}
 
-	Topics.addPostData = async function (postData, uid) {
+	Topics.addPostData = async function (postData, uid, options = {}) {
 		if (!Array.isArray(postData) || !postData.length) {
 			return [];
 		}
@@ -133,6 +135,8 @@ module.exports = function (Topics) {
 			Topics.addParentPosts(postData, uid),
 		]);
 
+		const canViewAnonymousOwner = Boolean(options.canViewAnonymousOwner);
+
 		postData.forEach((postObj, i) => {
 			if (postObj) {
 				postObj.user = postObj.uid ? userData[postObj.uid] : { ...userData[postObj.uid] };
@@ -150,7 +154,10 @@ module.exports = function (Topics) {
 					postObj.user.displayname = postObj.user.username;
 				}
 
-				posts.applyAnonymousState(postObj);
+				posts.applyAnonymousState(postObj, {
+					canViewAnonymousOwner,
+					originalUser: postObj.user,
+				});
 			}
 		});
 

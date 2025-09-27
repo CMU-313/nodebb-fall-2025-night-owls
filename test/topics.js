@@ -619,6 +619,43 @@ describe('Topic\'s', () => {
 		});
 	});
 
+	describe('anonymous author visibility', () => {
+		let anonymousTopic;
+
+		before(async () => {
+			({ topicData: anonymousTopic } = await topics.post({
+				uid: fooUid,
+				title: 'Anonymous Topic',
+				content: 'hidden owner',
+				cid: topic.categoryId,
+				anonymous: 1,
+			}));
+		});
+
+		it('should expose real author to admins and moderators', async () => {
+			const [topicData, adminPrivileges] = await Promise.all([
+				topics.getTopicData(anonymousTopic.tid),
+				privileges.topics.get(anonymousTopic.tid, adminUid),
+			]);
+			await topics.getTopicWithPosts(topicData, `tid:${anonymousTopic.tid}:posts`, adminUid, 0, -1, false, { privileges: adminPrivileges });
+			const mainPost = topicData.posts[0];
+			assert.strictEqual(mainPost.anonymous, true);
+			assert(mainPost.anonymousOriginalUser);
+			assert.strictEqual(mainPost.anonymousOriginalUser.uid, fooUid);
+		});
+
+		it('should keep real author hidden from regular users', async () => {
+			const [topicData, userPrivileges] = await Promise.all([
+				topics.getTopicData(anonymousTopic.tid),
+				privileges.topics.get(anonymousTopic.tid, fooUid),
+			]);
+			await topics.getTopicWithPosts(topicData, `tid:${anonymousTopic.tid}:posts`, fooUid, 0, -1, false, { privileges: userPrivileges });
+			const mainPost = topicData.posts[0];
+			assert.strictEqual(mainPost.anonymous, true);
+			assert.ok(!mainPost.anonymousOriginalUser);
+		});
+	});
+
 	describe('Title escaping', () => {
 		it('should properly escape topic title', (done) => {
 			const title = '"<script>alert(\'ok1\');</script> new topic test';

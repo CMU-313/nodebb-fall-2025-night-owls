@@ -44,6 +44,19 @@
 					</div>
 
 					<a class="fw-bold text-nowrap text-truncate" href="{{{ if ./user.userslug }}}{config.relative_path}/user/{./user.userslug}{{{ else }}}#{{{ end }}}" data-username="{posts.user.username}" data-uid="{posts.user.uid}">{posts.user.displayname}</a>
+					{{{ if (privileges.isAdminOrMod && posts.anonymousOriginalUser) }}}
+					<span class="text-muted text-nowrap ms-1 small">
+						(
+						{{{ if posts.anonymousOriginalUser.userslug }}}
+						<a class="text-muted text-decoration-none" href="{config.relative_path}/user/{posts.anonymousOriginalUser.userslug}">
+							{{{ if posts.anonymousOriginalUser.username }}}@{posts.anonymousOriginalUser.username}{{{ else }}}{posts.anonymousOriginalUser.displayname}{{{ end }}}
+						</a>
+						{{{ else }}}
+						{{{ if posts.anonymousOriginalUser.username }}}@{posts.anonymousOriginalUser.username}{{{ else }}}{posts.anonymousOriginalUser.displayname}{{{ end }}}
+						{{{ end }}}
+						)
+					</span>
+					{{{ end }}}
 				</div>
 
 				{{{ each posts.user.selectedGroups }}}
