@@ -105,32 +105,20 @@ Posts.modifyPostByPrivilege = function (post, privileges) {
 	}
 };
 
-Posts.getAllPosts = async function () {
-	try {
-		// Get all post IDs from the database
-		const pids = await db.getSortedSetRange('posts:pid', 0, -1);
-        
-		// Get full post data for all posts
-		const posts = await Posts.getPostsData(pids);
-        
-		// Format and print each post
-		posts.forEach((post) => {
-			if (post) {
-				console.log('\n-------------------');
-				console.log(`Post ID: ${post.pid}`);
-				console.log(`Content: ${post.content}`);
-				console.log(`Created by: ${post.uid}`);
-				console.log(`Created on: ${new Date(parseInt(post.timestamp)).toLocaleString()}`);
-				console.log('-------------------');
-			}
-		});
+Posts.getAllContent = async function () {
+	
+	const pids = await Posts.getPidsFromSet('posts:pid', 0, -1);
+	const posts = await Posts.getPostsData(pids);
+	const contents = [];
 
-		console.log(`\nTotal posts found: ${posts.length}`);
-		return posts;
-	} catch (err) {
-		console.error('Error fetching posts:', err);
-		throw err;
-	}
+	for (const post of posts) {
+		contents.push([post.pid, post.content]); //both
+	};
+
+	//console.log(contents);
+	return contents;
 };
 
+
 require('../promisify')(Posts);
+

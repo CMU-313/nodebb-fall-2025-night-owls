@@ -6,6 +6,9 @@ const assert = require('assert');
 const nconf = require('nconf');
 const path = require('path');
 const util = require('util');
+//new line to create posts object
+const Posts = require('../src/posts');
+
 
 const sleep = util.promisify(setTimeout);
 
@@ -1259,7 +1262,81 @@ describe('Post\'s', () => {
 			});
 		});
 	});
+
+	describe('Posts.getAllContent', ()=> {
+	//creating test posts
+		let testPid1;
+		let testPid2;
+
+		before(async ()=> {
+		//claude sonnet 3.5 generated code
+			const testTopic1 = await topics.post({
+				uid: 1,
+				cid: 1,
+				title: 'Test posts for getAllContent',
+				content: 'Test posts for getAllContent',
+			});
+			testPid1 = testTopic1.postData.pid;
+
+			const testTopic2 = await topics.post({
+				uid: 2,
+				cid: 2,
+				title: 'Another test post for getAllContent',
+				content: 'Another test post for getAllContent',
+			});
+			testPid2 = testTopic2.postData.pid;
+		});
+
+		it('should get all posts', async ()=> {
+			const contents = await posts.getAllContent();
+		
+			assert(Array.isArray(contents));
+			assert(contents.length == 30);
+			// console.log('Length: ' + contents.length);
+			// let string = '';
+			// contents.forEach((content)=> {
+			// string += content[1] + '\n';
+			// });
+			// console.log('All content posts: ' + string);
+
+
+			const testPost1 = contents[28];
+			const testPost2 = contents[29];
+
+			assert(testPost1);
+			assert(testPost2);
+			assert.strictEqual(testPost1[1], 'Test posts for getAllContent');
+			assert.strictEqual(testPost2[1], 'Another test post for getAllContent');
+
+			// const samplePost = contents[0];
+			// assert(samplePost.hasOwnProperty('pid'));
+			// assert(samplePost.hasOwnProperty('content'));
+			// assert(samplePost.hasOwnProperty('uid'));
+			// assert(samplePost.hasOwnProperty('timestamp'));
+			// assert(samplePost.hasOwnProperty('tid'));
+		});
+
+		it('should handle errors gracefully', async () => {
+		// Temporarily break the database connection
+			const originalGetPidsFromSet = posts.getPidsFromSet;
+			posts.getPidsFromSet = async () => { throw new Error('Test error'); };
+
+			try {
+				await posts.getAllContent();
+				assert(false, 'Should have thrown an error');
+			} catch (err) {
+				assert.strictEqual(err.message, 'Test error');
+			} finally {
+			// Restore the original function
+				posts.getPidsFromSet = originalGetPidsFromSet;
+			}
+		});
+
+	});
 });
+
+
+
 
 describe('Posts\'', async () => {
 	let files;
