@@ -44,6 +44,7 @@
 	<div class="category d-flex flex-column {{{if widgets.sidebar.length }}}col-lg-9 col-sm-12{{{ else }}}col-lg-12{{{ end }}}">
 		<!-- IMPORT partials/category/subcategory.tpl -->
 		{{{ if (topics.length || privileges.topics:create) }}}
+		<!-- IMPORT partials/search-topics.tpl -->
 		<!-- IMPORT partials/topic-list-bar.tpl -->
 		{{{ end }}}
 
