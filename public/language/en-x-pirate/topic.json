@@ -100,6 +100,8 @@
     "thread-tools.markAsUnreadForAll": "Mark Unread For All",
     "thread-tools.pin": "Pin Topic",
     "thread-tools.unpin": "Unpin Topic",
+    "thread-tools.archive": "Archive Topic",
+    "thread-tools.unarchive": "Unarchive Topic",
     "thread-tools.lock": "Lock Topic",
     "thread-tools.unlock": "Unlock Topic",
     "thread-tools.move": "Move Topic",

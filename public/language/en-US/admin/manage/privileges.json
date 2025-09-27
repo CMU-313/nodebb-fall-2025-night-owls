@@ -38,6 +38,8 @@
 	"upvote-posts": "Upvote Posts",
 	"downvote-posts": "Downvote Posts",
 	"delete-topics": "Delete Topics",
+	"archive-posts": "Archive Posts",
+	"unarchive-posts": "Unarchive Posts",
 	"purge": "Purge",
 	"moderate": "Moderate",
 	"admin-dashboard": "Dashboard",

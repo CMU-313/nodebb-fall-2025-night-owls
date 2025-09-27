@@ -33,12 +33,12 @@
 
 	<li>
 		<a component="topic/archive" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2" role="menuitem">
-			<i class="fa fa-fw fa-thumb-tack text-secondary"></i> [[topic:thread-tools.archive]]
+			<i class="fa fa-fw fa-thumb-tack text-secondary"></i> Archive
 		</a>
 	</li>
 	<li>
 		<a component="topic/unarchive" href="#" class="hidden dropdown-item rounded-1" role="menuitem">
-			<i class="fa fa-fw fa-thumb-tack fa-rotate-90 text-secondary"></i> [[topic:thread-tools.unarchive]]
+			<i class="fa fa-fw fa-thumb-tack fa-rotate-90 text-secondary"></i> Unarchive
 		</a>
 	</li>
 

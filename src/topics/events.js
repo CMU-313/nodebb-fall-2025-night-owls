@@ -38,11 +38,11 @@ Events._types = {
 		translation: async (event, language) => translateSimple(event, language, 'topic:user-unpinned-topic'),
 	},
 	archive: {
-		icon: 'fa-thumb-tack',
+		icon: 'fa-solid fa-folder',
 		translation: async (event, language) => translateSimple(event, language, 'topic:user-archived-topic'),
 	},
 	unarchive: {
-		icon: 'fa-thumb-tack fa-rotate-90',
+		icon: 'fa-solid fa-folder-open',
 		translation: async (event, language) => translateSimple(event, language, 'topic:user-unarchived-topic'),
 	},
 	lock: {
