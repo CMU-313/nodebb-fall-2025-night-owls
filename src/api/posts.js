@@ -491,11 +491,22 @@ postsAPI.createStrike = async function (caller, data) {
 		throw new Error('[[error:no-privileges]]');
 	}
 
+	const reason = typeof data.reason === 'string' ? data.reason.trim() : '';
+	if (!reason) {
+		throw new Error('[[error:invalid-data]]');
+	}
+	if (reason.length > 500) {
+		throw new Error('[[error:content-too-long, 500]]');
+	}
+
 	const strike = await strikes.create({
 		issuerUid: caller.uid,
 		pid: data.pid,
 		ip: caller.ip,
+		reason: reason,
 	});
+	strike.timestampISO = utils.toISOString(strike.timestamp);
+	strike.reason = validator.escape(strike.reason);
 
 	await events.log({
 		type: 'post-strike',

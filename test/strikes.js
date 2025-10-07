@@ -49,6 +49,10 @@ describe('Strikes API', () => {
 	it('should block non-admin users from issuing strikes', async () => {
 		const { response, body } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
 			jar: userJar,
+			body: {
+				reason: 'Testing reason',
+			},
+			json: true,
 		});
 
 		assert.strictEqual(response.statusCode, 403);
@@ -56,8 +60,13 @@ describe('Strikes API', () => {
 	});
 
 	it('should allow admins to issue strikes tied to the target post', async () => {
+		const reason = 'Posting spam links';
 		const { response, body } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
 			jar: adminJar,
+			body: {
+				reason: reason,
+			},
+			json: true,
 		});
 
 		assert.strictEqual(response.statusCode, 200);
@@ -66,10 +75,12 @@ describe('Strikes API', () => {
 		assert.strictEqual(parseInt(strike.pid, 10), post.pid);
 		assert.strictEqual(parseInt(strike.targetUid, 10), regularUid);
 		assert.strictEqual(parseInt(strike.issuerUid, 10), adminUid);
+		assert.strictEqual(strike.reason, reason);
 
 		const stored = await db.getObject(`strike:${strike.sid}`);
 		assert.strictEqual(parseInt(stored.pid, 10), post.pid);
 		assert.strictEqual(parseInt(stored.targetUid, 10), regularUid);
+		assert.strictEqual(stored.reason, reason);
 
 		const postStrikeCount = await db.sortedSetCard(`post:${post.pid}:strikes`);
 		assert.strictEqual(postStrikeCount, 1);
@@ -79,5 +90,18 @@ describe('Strikes API', () => {
 
 		const issuedCount = await db.sortedSetCard(`uid:${adminUid}:issued:strikes`);
 		assert.strictEqual(issuedCount, 1);
+	});
+
+	it('should reject strike creation without a reason', async () => {
+		const { response, body } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
+			jar: adminJar,
+			body: {
+				reason: '   ',
+			},
+			json: true,
+		});
+
+		assert.strictEqual(response.statusCode, 400);
+		assert.strictEqual(body.status.message, 'Invalid Data');
 	});
 });
