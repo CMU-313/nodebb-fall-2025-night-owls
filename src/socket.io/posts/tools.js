@@ -11,6 +11,7 @@ const plugins = require('../../plugins');
 const social = require('../../social');
 const user = require('../../user');
 const utils = require('../../utils');
+const strikes = require('../../strikes');
 
 module.exports = function (SocketPosts) {
 	SocketPosts.loadPostTools = async function (socket, data) {
@@ -49,6 +50,8 @@ module.exports = function (SocketPosts) {
 		postData.display_change_owner_tools = results.isAdmin || results.isModerator;
 		postData.display_manage_editors_tools = results.isAdmin || results.isModerator || postData.selfPost;
 		postData.display_ip_ban = (results.isAdmin || results.isGlobalMod) && !postData.selfPost;
+		postData.display_strike_tools = results.isAdmin;
+		postData.strikeCount = await strikes.getCountForPid(data.pid);
 		postData.display_history = results.history && results.canViewHistory;
 		postData.display_original_url = !utils.isNumber(data.pid);
 		postData.flags = {
