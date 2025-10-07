@@ -1,0 +1,56 @@
+post:
+  tags:
+    - posts
+  summary: issue a strike on a post
+  description: This operation records an administrator strike against a specific post.
+  parameters:
+    - in: path
+      name: pid
+      schema:
+        type: string
+      required: true
+      description: a valid post id
+      example: 2
+  responses:
+    '200':
+      description: Strike successfully recorded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                $ref: '../../../components/schemas/Status.yaml#/Status'
+              response:
+                type: object
+                properties:
+                  strike:
+                    type: object
+                    properties:
+                      sid:
+                        type: number
+                      pid:
+                        type: number
+                      tid:
+                        type: number
+                      targetUid:
+                        type: number
+                      issuerUid:
+                        type: number
+                      cid:
+                        type: number
+                      timestamp:
+                        type: number
+                      ip:
+                        type: string
+                    required:
+                      - sid
+                      - pid
+                      - tid
+                      - targetUid
+                      - issuerUid
+                      - cid
+                      - timestamp
+            required:
+              - status
+              - response
