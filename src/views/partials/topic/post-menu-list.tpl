@@ -57,6 +57,14 @@
 </li>
 {{{ end }}}
 
+{{{ if posts.canViewStrikes && posts.strikeCount }}}
+<li>
+	<a class="dropdown-item rounded-1 d-flex align-items-center gap-2" component="post/view-strikes" role="menuitem" href="#" data-pid="{posts.pid}">
+		<span class="menu-icon"><i class="fa fa-fw text-secondary fa-commenting"></i></span> [[topic:view-strikes]]
+	</a>
+</li>
+{{{ end }}}
+
 {{{ if posts.ip }}}
 <li>
 	<a class="dropdown-item rounded-1 d-flex align-items-center gap-2" component="post/copy-ip" role="menuitem" href="#" data-clipboard-text="{posts.ip}">
