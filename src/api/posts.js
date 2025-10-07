@@ -19,6 +19,7 @@ const websockets = require('../socket.io');
 const socketHelpers = require('../socket.io/helpers');
 const translator = require('../translator');
 const notifications = require('../notifications');
+const strikes = require('../strikes');
 
 const postsAPI = module.exports;
 
@@ -475,6 +476,38 @@ postsAPI.bookmark = async function (caller, data) {
 
 postsAPI.unbookmark = async function (caller, data) {
 	return await apiHelpers.postCommand(caller, 'unbookmark', 'bookmarked', '', data);
+};
+
+postsAPI.createStrike = async function (caller, data) {
+	if (!data || !data.pid) {
+		throw new Error('[[error:invalid-data]]');
+	}
+	if (!caller.uid) {
+		throw new Error('[[error:not-logged-in]]');
+	}
+
+	const isAdmin = await user.isAdministrator(caller.uid);
+	if (!isAdmin) {
+		throw new Error('[[error:no-privileges]]');
+	}
+
+	const strike = await strikes.create({
+		issuerUid: caller.uid,
+		pid: data.pid,
+		ip: caller.ip,
+	});
+
+	await events.log({
+		type: 'post-strike',
+		uid: caller.uid,
+		pid: strike.pid,
+		tid: strike.tid,
+		sid: strike.sid,
+		targetUid: strike.targetUid,
+		ip: caller.ip,
+	});
+
+	return strike;
 };
 
 async function diffsPrivilegeCheck(pid, uid) {
