@@ -48,6 +48,15 @@
 </li>
 {{{ end }}}
 
+{{{ if posts.display_strike_tools }}}
+<li>
+	<a class="dropdown-item rounded-1 d-flex align-items-center gap-2" component="post/strike" role="menuitem" href="#" data-pid="{posts.pid}" data-strike-count="{posts.strikeCount}">
+		<span class="menu-icon"><i class="fa fa-fw text-secondary fa-gavel"></i></span> [[topic:give-strike]]
+		{{{ if posts.strikeCount }}}<span class="badge bg-danger text-white ms-auto">{posts.strikeCount}</span>{{{ end }}}
+	</a>
+</li>
+{{{ end }}}
+
 {{{ if posts.ip }}}
 <li>
 	<a class="dropdown-item rounded-1 d-flex align-items-center gap-2" component="post/copy-ip" role="menuitem" href="#" data-clipboard-text="{posts.ip}">
