@@ -28,6 +28,7 @@ module.exports = function (Categories) {
 			// {pid: 2, content: 'Another post discussing Python programming.'},
 			// ];
 			const allPostContent = await posts.getAllContent();
+			console.log('All post content:', allPostContent);
 
 			const fuse = new Fuse(allPostContent, {
 				includeScore: false, //Claude Sonnet 4.5 recommendation (next line too)
