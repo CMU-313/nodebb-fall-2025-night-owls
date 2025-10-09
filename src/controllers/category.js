@@ -102,6 +102,7 @@ categoryController.get = async function (req, res, next) {
 		query: req.query,
 		tag: req.query.tag,
 		targetUid: targetUid,
+		search: req.query.search,
 	});
 	if (!categoryData) {
 		return next();

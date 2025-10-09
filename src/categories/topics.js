@@ -10,6 +10,8 @@ const notifications = require('../notifications');
 const translator = require('../translator');
 const batch = require('../batch');
 const utils = require('../utils');
+const Fuse = require('fuse.js');
+const posts = require('../posts');
 
 module.exports = function (Categories) {
 	Categories.getCategoryTopics = async function (data) {
@@ -17,6 +19,28 @@ module.exports = function (Categories) {
 		const tids = await Categories.getTopicIds(results);
 		let topicsData = await topics.getTopicsByTids(tids, data.uid);
 		topicsData = await user.blocks.filter(data.uid, topicsData);
+
+		if (data.search && data.search.trim()) {
+			console.log('search implementation pending: ' + data.search);
+
+			// const allPostsExample = [
+			// {pid: 1, content: 'This is a test post about JavaScript.'},
+			// {pid: 2, content: 'Another post discussing Python programming.'},
+			// ];
+			const allPostContent = await posts.getAllContent();
+
+			const fuse = new Fuse(allPostContent, {
+				includeScore: false, //Claude Sonnet 4.5 recommendation (next line too)
+				threshold: 0.4,
+				keys: ['content'],
+			});
+
+			const results = fuse.search(data.search);
+
+			console.log('Search results:', results);
+
+
+		}
 
 		if (!topicsData.length) {
 			return { topics: [], uid: data.uid };
