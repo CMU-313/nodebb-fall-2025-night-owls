@@ -43,6 +43,7 @@ Notifications.baseTypes = [
 	'notificationType_group-leave',
 	'notificationType_group-request-membership',
 	'notificationType_new-reward',
+	'notificationType_post-strike',
 ];
 
 Notifications.privilegedTypes = [

@@ -2,6 +2,7 @@
 
 const validator = require('validator');
 const _ = require('lodash');
+const winston = require('winston');
 
 const db = require('../database');
 const utils = require('../utils');
@@ -517,6 +518,43 @@ postsAPI.createStrike = async function (caller, data) {
 		targetUid: strike.targetUid,
 		ip: caller.ip,
 	});
+
+	const targetUid = parseInt(strike.targetUid, 10);
+	if (targetUid > 0) {
+		setImmediate(async () => {
+			try {
+				const [topicTitle, issuerData] = await Promise.all([
+					topics.getTopicField(strike.tid, 'title'),
+					user.getUserFields(caller.uid, ['displayname', 'username']),
+				]);
+				const rawTitle = topicTitle ? String(topicTitle) : '';
+				const escapedTitle = utils.escapeHTML(utils.decodeHTMLEntities(rawTitle));
+				const displayTitle = escapedTitle || `post #${strike.pid}`;
+				const issuerName = utils.escapeHTML(String(
+					(issuerData && (issuerData.displayname || issuerData.username)) || 'Admin'
+				));
+				const reasonHtml = strike.reason.replace(/\r?\n/g, '<br/>');
+				const bodyShort = `Your post "<strong>${displayTitle}</strong>" received a strike.<br/><strong>Reason:</strong> ${reasonHtml}`;
+				const bodyLong = `<p><strong>Reason:</strong> ${reasonHtml}</p><p><strong>Issued by:</strong> ${issuerName}</p>`;
+				const notifObj = await notifications.create({
+					type: 'post-strike',
+					bodyShort: bodyShort,
+					bodyLong: bodyLong,
+					path: `/post/${strike.pid}`,
+					nid: `post-strike:${strike.sid}`,
+					from: caller.uid,
+					pid: strike.pid,
+					tid: strike.tid,
+					mergeId: `post-strike:${strike.sid}`,
+				});
+				if (notifObj) {
+					await notifications.push(notifObj, [targetUid]);
+				}
+			} catch (err) {
+				winston.error(err.stack);
+			}
+		});
+	}
 
 	return strike;
 };
