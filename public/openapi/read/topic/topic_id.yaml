@@ -150,6 +150,8 @@ get:
                         type: boolean
                       isAdminOrMod:
                         type: boolean
+                      isAdmin:
+                        type: boolean
                       disabled:
                         type: number
                       tid:

@@ -66,6 +66,7 @@ define('forum/topic/posts', [
 			post.display_edit_tools = (ajaxify.data.privileges['posts:edit'] && post.selfPost) || ajaxify.data.privileges.isAdminOrMod;
 			post.display_delete_tools = (ajaxify.data.privileges['posts:delete'] && post.selfPost) || ajaxify.data.privileges.isAdminOrMod;
 			post.display_moderator_tools = post.display_edit_tools || post.display_delete_tools;
+			post.display_strike_tools = ajaxify.data.privileges.isAdmin;
 			post.display_move_tools = ajaxify.data.privileges.isAdminOrMod;
 			post.display_post_menu = ajaxify.data.privileges.isAdminOrMod ||
 				(post.selfPost && !ajaxify.data.locked && !post.deleted) ||

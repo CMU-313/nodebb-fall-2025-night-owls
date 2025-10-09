@@ -155,6 +155,27 @@ define('forum/topic/postTools', [
 			});
 		});
 
+		postContainer.on('click', '[component="post/strike"]', function (e) {
+			e.preventDefault();
+			const btn = $(this);
+			const pid = getData(btn, 'data-pid');
+			bootbox.confirm('[[topic:give-strike-confirm]]', async (confirm) => {
+				if (!confirm) {
+					return;
+				}
+				btn.addClass('disabled');
+				try {
+					await api.post(`/posts/${encodeURIComponent(pid)}/strikes`);
+					alerts.success('[[topic:give-strike-success]]');
+					PostTools.removeMenu(btn.parents('[component="post"]').first());
+				} catch (err) {
+					alerts.error(err);
+				} finally {
+					btn.removeClass('disabled');
+				}
+			});
+		});
+
 		postContainer.on('click', '[component="post/already-flagged"]', function () {
 			const flagId = $(this).data('flag-id');
 			require(['flags'], function (flags) {

@@ -163,6 +163,11 @@ Posts.unbookmark = async (req, res) => {
 	helpers.formatApiResponse(200, res);
 };
 
+Posts.createStrike = async (req, res) => {
+	const strike = await api.posts.createStrike(req, { pid: req.params.pid });
+	helpers.formatApiResponse(200, res, { strike });
+};
+
 Posts.getDiffs = async (req, res) => {
 	helpers.formatApiResponse(200, res, await api.posts.getDiffs(req, { ...req.params }));
 };
