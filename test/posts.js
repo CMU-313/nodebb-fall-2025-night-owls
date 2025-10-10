@@ -1292,28 +1292,16 @@ describe('Post\'s', () => {
 		
 			assert(Array.isArray(contents));
 			assert(contents.length == 30);
-			// console.log('Length: ' + contents.length);
-			// let string = '';
-			// contents.forEach((content)=> {
-			// string += content[1] + '\n';
-			// });
-			// console.log('All content posts: ' + string);
-
 
 			const testPost1 = contents[28];
 			const testPost2 = contents[29];
 
 			assert(testPost1);
 			assert(testPost2);
-			assert.strictEqual(testPost1[1], 'Test posts for getAllContent');
-			assert.strictEqual(testPost2[1], 'Another test post for getAllContent');
-
-			// const samplePost = contents[0];
-			// assert(samplePost.hasOwnProperty('pid'));
-			// assert(samplePost.hasOwnProperty('content'));
-			// assert(samplePost.hasOwnProperty('uid'));
-			// assert(samplePost.hasOwnProperty('timestamp'));
-			// assert(samplePost.hasOwnProperty('tid'));
+			assert.strictEqual(testPost1.pid, testPid1);
+			assert.strictEqual(testPost1.content, 'Test posts for getAllContent');
+			assert.strictEqual(testPost2.pid, testPid2);
+			assert.strictEqual(testPost2.content, 'Another test post for getAllContent');
 		});
 
 		it('should handle errors gracefully', async () => {
