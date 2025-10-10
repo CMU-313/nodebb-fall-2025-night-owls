@@ -11,7 +11,6 @@ const meta = require('../../meta');
 const pagination = require('../../pagination');
 const utils = require('../../utils');
 const helpers = require('../helpers');
-const { search } = require('..');
 
 const controller = module.exports;
 
