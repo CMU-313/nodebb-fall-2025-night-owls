@@ -23,12 +23,7 @@ module.exports = function (Categories) {
 		if (data.search && data.search.trim()) {
 			console.log('search implementation pending: ' + data.search);
 
-			// const allPostsExample = [
-			// {pid: 1, content: 'This is a test post about JavaScript.'},
-			// {pid: 2, content: 'Another post discussing Python programming.'},
-			// ];
 			const allPostContent = await posts.getAllContent();
-			//console.log('All post content:', allPostContent);
 
 			const fuse = new Fuse(allPostContent, {
 				includeScore: false, //Claude Sonnet 4.5 recommendation (next line too)

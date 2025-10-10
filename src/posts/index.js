@@ -112,10 +112,9 @@ Posts.getAllContent = async function () {
 	const contents = [];
 
 	for (const post of posts) {
-		contents.push({pid: post.pid, content: post.content}); //both
+		contents.push({pid: post.pid, content: post.content});
 	};
 
-	//console.log(contents);
 	return contents;
 };
 
