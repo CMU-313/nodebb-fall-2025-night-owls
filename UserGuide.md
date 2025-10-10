@@ -6,11 +6,11 @@
 4) The page will display only topics which contain the search in its contents for that category
 
 ### Automated Test Location
-Function to find all posts: test/post.js
+Function to find all posts: test/post.js<br>
 Function to filter all posts: test/categories.js
 
 ### Automated Test Description
-Function to find all posts:
+Function to find all posts:<br>
 Function to filter all posts:
 
 ### Why is this sufficient?
