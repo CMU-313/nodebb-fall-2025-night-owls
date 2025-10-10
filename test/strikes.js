@@ -13,13 +13,31 @@ const plugins = require('../src/plugins');
 
 const sleep = util.promisify(setTimeout);
 
+async function emitViaSocket(socket, event, data) {
+	return await new Promise((resolve, reject) => {
+			socket.emit(event, data, (err, result) => {
+				if (err) {
+					const message = typeof err === 'string' ? err : (err && err.message) || JSON.stringify(err);
+					const error = err instanceof Error ? err : new Error(message);
+				reject(error);
+				return;
+			}
+			resolve(result);
+		});
+	});
+}
+
 describe('Strikes API', () => {
 	let adminUid;
 	let regularUid;
+	let otherUid;
 	let category;
 	let post;
 	let adminJar;
 	let userJar;
+	let adminSocket;
+	let userSocket;
+	let otherSocket;
 
 	before(async () => {
 		const noopEmailer = async () => {};
@@ -41,12 +59,25 @@ describe('Strikes API', () => {
 			content: 'content to strike',
 		}));
 
-		({ jar: adminJar } = await helpers.loginUser('strike-admin', 'hunter2'));
-		({ jar: userJar } = await helpers.loginUser('strike-user', 'hunter2'));
+		const adminLogin = await helpers.loginUser('strike-admin', 'hunter2');
+		const userLogin = await helpers.loginUser('strike-user', 'hunter2');
+		otherUid = await User.create({ username: 'strike-bystander', password: 'hunter2', email: 'strike-bystander@example.com' });
+		const otherLogin = await helpers.loginUser('strike-bystander', 'hunter2');
+
+		adminJar = adminLogin.jar;
+		userJar = userLogin.jar;
+		adminSocket = await helpers.connectSocketIO(adminLogin.response, adminLogin.csrf_token);
+		userSocket = await helpers.connectSocketIO(userLogin.response, userLogin.csrf_token);
+		otherSocket = await helpers.connectSocketIO(otherLogin.response, otherLogin.csrf_token);
 	});
 
-	after(() => {
+	after(async () => {
 		plugins.hooks.unregister('strikes-test', 'static:email.send');
+		[adminSocket, userSocket, otherSocket].forEach((socket) => {
+			if (socket) {
+				socket.close();
+			}
+		});
 	});
 
 	it('should block non-admin users from issuing strikes', async () => {
@@ -93,6 +124,22 @@ describe('Strikes API', () => {
 
 		const issuedCount = await db.sortedSetCard(`uid:${adminUid}:issued:strikes`);
 		assert.strictEqual(issuedCount, 1);
+
+		const adminStrikes = await emitViaSocket(adminSocket, 'posts.getStrikes', { pid: post.pid });
+		const userStrikes = await emitViaSocket(userSocket, 'posts.getStrikes', { pid: post.pid });
+		const fetched = adminStrikes.find(item => parseInt(item.sid, 10) === parseInt(strike.sid, 10));
+		assert(fetched, 'admin should see strike details');
+		assert.strictEqual(fetched.reason, reason);
+		const userFetched = userStrikes.find(item => parseInt(item.sid, 10) === parseInt(strike.sid, 10));
+		assert(userFetched, 'target user should see strike details');
+		assert.strictEqual(userFetched.reason, reason);
+	});
+
+	it('should hide strike details from unrelated users', async () => {
+		await assert.rejects(
+			emitViaSocket(otherSocket, 'posts.getStrikes', { pid: post.pid }),
+			(err) => err && /no-privileges/.test(err.message)
+		);
 	});
 
 	it('should notify only the struck user with reason and link', async () => {
