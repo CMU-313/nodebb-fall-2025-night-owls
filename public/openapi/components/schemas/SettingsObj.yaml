@@ -135,6 +135,9 @@ Settings:
     notificationType_new-user-flag:
       type: string
       description: Notification type for user flagged
+    notificationType_post-strike:
+      type: string
+      description: Notification type for strikes issued against your posts
     categoryWatchState:
       type: string
       description: Default watch state for categories
@@ -175,6 +178,7 @@ Settings:
     - notificationType_post-queue
     - notificationType_new-post-flag
     - notificationType_new-user-flag
+    - notificationType_post-strike
     - categoryWatchState
     - notificationType_group-request-membership
     - uid
