@@ -11,6 +11,7 @@ const meta = require('../../meta');
 const pagination = require('../../pagination');
 const utils = require('../../utils');
 const helpers = require('../helpers');
+const { search } = require('..');
 
 const controller = module.exports;
 
@@ -46,6 +47,7 @@ controller.list = async function (req, res) {
 		query: req.query,
 		tag: req.query.tag,
 		targetUid: targetUid,
+		search: req.query.search,
 	};
 	const data = await categories.getCategoryById(cidQuery);
 	delete data.children;

@@ -10,6 +10,7 @@ const privileges = require('../privileges');
 const utils = require('../utils');
 
 const activitypubApi = require('./activitypub');
+const { search } = require('.');
 
 const categoriesAPI = module.exports;
 
@@ -150,6 +151,7 @@ categoriesAPI.getTopics = async (caller, data) => {
 		query: data.query,
 		tag: data.query.tag,
 		targetUid,
+		search: data.query.search,
 	});
 	categories.modifyTopicsByPrivilege(result.topics, userPrivileges);
 
