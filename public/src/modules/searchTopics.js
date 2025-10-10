@@ -10,7 +10,6 @@ define('searchTopics', [], function () {
 			event.preventDefault();
 
 			const query = el.find('#search-topics').val().trim();
-			console.log('Search request received for: ', query);
 			window.location.search = `?search=${encodeURIComponent(query)}`;
 		});
 	};

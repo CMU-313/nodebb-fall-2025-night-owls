@@ -21,8 +21,6 @@ module.exports = function (Categories) {
 		topicsData = await user.blocks.filter(data.uid, topicsData);
 
 		if (data.search && data.search.trim()) {
-			console.log('search implementation pending: ' + data.search);
-
 			const allPostContent = await posts.getAllContent();
 
 			const fuse = new Fuse(allPostContent, {
@@ -32,9 +30,8 @@ module.exports = function (Categories) {
 			});
 
 			const results = fuse.search(data.search);
-
-			console.log('Search results:', results);
-
+			const matchingPids = results.map(result => result.item.pid);
+			topicsData = topicsData.filter(topic => matchingPids.includes(topic.mainPid));
 
 		}
 
