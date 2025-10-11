@@ -103,6 +103,31 @@ describe('Categories', () => {
 	});
 
 	describe('.getCategoryTopics', () => {
+		let goodTopic;
+		let badTopic;
+		let searchCategory;
+
+		before(async () => {
+			searchCategory = await Categories.create({
+				name: 'Search Category',
+				description: 'Category for search tests',
+			});
+			goodTopic = await Topics.post({
+				uid: posterUid,
+				cid: searchCategory.cid,
+				title: 'Test Topic Title 1',
+				content: 'The content of the good test topic',
+				tags: ['nodebb'],
+			});
+			badTopic = await Topics.post({
+				uid: posterUid,
+				cid: searchCategory.cid,
+				title: 'Test Topic Title 2',
+				content: 'The content of the bad test topic',
+				tags: ['nodebb'],
+			});
+		});
+
 		it('should return a list of topics', (done) => {
 			Categories.getCategoryTopics({
 				cid: categoryObj.cid,
@@ -136,6 +161,31 @@ describe('Categories', () => {
 				done();
 			});
 		});
+
+		it('should return a list of topics filered by a search query', (done) => {
+			Categories.getCategoryTopics({
+				cid: searchCategory.cid,
+				start: 0,
+				stop: 10,
+				uid: 0,
+				sort: 'oldest_to_newest',
+				search: 'good',
+			}, (err, result) => {
+				assert.equal(err, null);
+				assert(Array.isArray(result.topics));
+				assert(result.topics.every(topic => topic instanceof Object));
+
+				// Suggested by Github Copilot
+				// Assert that the good topic is included
+				const topicTids = result.topics.map(t => t.tid);
+				assert(topicTids.includes(goodTopic.topicData.tid), 'Good topic should be included');
+				// Assert that the bad topic is not included
+				assert(!topicTids.includes(badTopic.topicData.tid), 'Bad topic should not be included');
+				
+				done();
+			});
+		});
+
 	});
 
 	describe('Categories.moveRecentReplies', () => {
