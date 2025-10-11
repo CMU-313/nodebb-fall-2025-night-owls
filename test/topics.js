@@ -31,11 +31,13 @@ describe('Topic\'s', () => {
 	let adminUid;
 	let adminJar;
 	let csrf_token;
-	let fooUid;
+let fooUid;
+let barUid;
 
 	before(async () => {
 		adminUid = await User.create({ username: 'admin', password: '123456' });
 		fooUid = await User.create({ username: 'foo' });
+		barUid = await User.create({ username: 'bar' });
 		await groups.join('administrators', adminUid);
 		const adminLogin = await helpers.loginUser('admin', '123456');
 		adminJar = adminLogin.jar;
@@ -621,15 +623,22 @@ describe('Topic\'s', () => {
 
 	describe('anonymous author visibility', () => {
 		let anonymousTopic;
+		let anonymousMainPost;
 
 		before(async () => {
-			({ topicData: anonymousTopic } = await topics.post({
+			({ topicData: anonymousTopic, postData: anonymousMainPost } = await topics.post({
 				uid: fooUid,
 				title: 'Anonymous Topic',
 				content: 'hidden owner',
 				cid: topic.categoryId,
 				anonymous: 1,
 			}));
+		});
+
+		it('should persist anonymous flag and original author server-side', async () => {
+			const stored = await db.getObject(`post:${anonymousMainPost.pid}`);
+			assert.strictEqual(parseInt(stored.anonymous, 10), 1);
+			assert.strictEqual(parseInt(stored.uid, 10), fooUid);
 		});
 
 		it('should expose real author to admins and moderators', async () => {
@@ -642,6 +651,8 @@ describe('Topic\'s', () => {
 			assert.strictEqual(mainPost.anonymous, true);
 			assert(mainPost.anonymousOriginalUser);
 			assert.strictEqual(mainPost.anonymousOriginalUser.uid, fooUid);
+			assert.strictEqual(mainPost.user.username, '[[global:anonymous]]');
+			assert.strictEqual(mainPost.user.uid, 0);
 		});
 
 		it('should keep real author hidden from regular users', async () => {
@@ -653,6 +664,29 @@ describe('Topic\'s', () => {
 			const mainPost = topicData.posts[0];
 			assert.strictEqual(mainPost.anonymous, true);
 			assert.ok(!mainPost.anonymousOriginalUser);
+			assert.strictEqual(mainPost.user.username, '[[global:anonymous]]');
+			assert.strictEqual(mainPost.user.uid, 0);
+		});
+
+		it('should keep author hidden from other viewers and in summaries', async () => {
+			const [topicData, userPrivileges] = await Promise.all([
+				topics.getTopicData(anonymousTopic.tid),
+				privileges.topics.get(anonymousTopic.tid, barUid),
+			]);
+			await topics.getTopicWithPosts(topicData, `tid:${anonymousTopic.tid}:posts`, barUid, 0, -1, false, { privileges: userPrivileges });
+			const mainPost = topicData.posts[0];
+			assert.strictEqual(mainPost.anonymous, true);
+			assert.ok(!mainPost.anonymousOriginalUser);
+			assert.strictEqual(mainPost.user.username, '[[global:anonymous]]');
+			assert.strictEqual(mainPost.user.uid, 0);
+
+			const summaries = await posts.getPostSummaryByPids([anonymousMainPost.pid], barUid, { parse: false });
+			const summaryPost = summaries[0];
+			assert(summaryPost);
+			assert.strictEqual(summaryPost.anonymous, true);
+			assert.strictEqual(summaryPost.user.username, '[[global:anonymous]]');
+			assert.strictEqual(summaryPost.user.uid, 0);
+			assert.ok(!summaryPost.anonymousOriginalUser);
 		});
 	});
 
