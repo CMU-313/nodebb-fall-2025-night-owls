@@ -10,7 +10,7 @@ Function to find all posts: test/post.js<br>
 Function to filter all posts: test/categories.js
 
 ### Automated Test Description
-Function to find all posts:<br>
+Function to find all posts: A new test was added inside test/posts.js: 1266 for Posts.getAllContent(). This test creates temperary posts and checks if there are exactly 30 posts in the array, as getAllContent returns an array of dictionaries. It then checks if the new posts, represented with testPost1 and testPost2 return the messages `Test posts for getAllContent` and `Another test post for getAllContent` for testPost1[content] and testPost2[content]. <br>
 Function to filter all posts: A new test was added inside of test/categories.js:105 for .getCategoryTopics(). The test creates two topics in a new category and searches for one of them (the search query is "good" to match the description: `content: 'The content of the good test topic',`). It then asserts that the "good" topic is in the resulting list of topics and not the "bad" topic.
 
 
