@@ -495,7 +495,7 @@ describe('API', async () => {
 					}
 
 					let body = {};
-					let type = 'json';
+					const type = 'json';
 					if (context[method].hasOwnProperty('requestBody')) {
 						const content = context[method].requestBody.content || {};
 
