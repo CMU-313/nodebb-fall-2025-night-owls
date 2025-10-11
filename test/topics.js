@@ -31,8 +31,8 @@ describe('Topic\'s', () => {
 	let adminUid;
 	let adminJar;
 	let csrf_token;
-let fooUid;
-let barUid;
+	let fooUid;
+	let barUid;
 
 	before(async () => {
 		adminUid = await User.create({ username: 'admin', password: '123456' });

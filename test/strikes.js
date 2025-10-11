@@ -15,10 +15,10 @@ const sleep = util.promisify(setTimeout);
 
 async function emitViaSocket(socket, event, data) {
 	return await new Promise((resolve, reject) => {
-			socket.emit(event, data, (err, result) => {
-				if (err) {
-					const message = typeof err === 'string' ? err : (err && err.message) || JSON.stringify(err);
-					const error = err instanceof Error ? err : new Error(message);
+		socket.emit(event, data, (err, result) => {
+			if (err) {
+				const message = typeof err === 'string' ? err : (err && err.message) || JSON.stringify(err);
+				const error = err instanceof Error ? err : new Error(message);
 				reject(error);
 				return;
 			}
