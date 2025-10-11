@@ -68,13 +68,7 @@ These tests are sufficient because they check the entire feature from start to f
 
 
 # Archive Posts
-### How to Use & Test
-
-### Automated Test Location
-
-### Automated Test Description
-
-### Why is this sufficient?
+This feature is incomplete. In the case of full implementation, testing for it would be located within the plugin, the beginning process of this is within the associated draft PR for the Archive plugin.
 
 # Strike System
 ### How to Use & Test
