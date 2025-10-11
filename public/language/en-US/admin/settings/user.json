@@ -94,5 +94,7 @@
 	"handles.enabled": "Allow guest handles",
 	"handles.enabled-help": "This option exposes a new field that allows guests to pick a name to associate with each post they make. If disabled, they will simply be called \"Guest\"",
 	"topic-views.enabled": "Allow guests to increase topic view counts",
-	"reply-notifications.enabled": "Allow guests to generate reply notifications"
+	"reply-notifications.enabled": "Allow guests to generate reply notifications",
+	"strike-auto-ban-days": "Automatic strike ban duration (days)",
+	"strike-auto-ban-days-help": "Users with three strikes are banned for this many days."
 }

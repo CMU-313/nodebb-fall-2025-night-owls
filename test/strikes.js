@@ -2,7 +2,6 @@
 
 const assert = require('assert');
 const util = require('util');
-const nconf = require('nconf');
 
 const db = require('./mocks/databasemock');
 const helpers = require('./helpers');
@@ -96,37 +95,68 @@ describe('Strikes API', () => {
 		assert.strictEqual(issuedCount, 1);
 	});
 
-	it('should create a private strike notification for the target user', async () => {
-		await User.notifications.deleteAll(regularUid);
-		await User.notifications.deleteAll(adminUid);
+	it('should notify only the struck user with reason and link', async () => {
+		await Promise.all([
+			User.notifications.deleteAll(regularUid),
+			User.notifications.deleteAll(adminUid),
+		]);
 
 		const reason = 'Reminder: follow community guidelines.';
-		const { response, body } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
+		const { response } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
 			jar: adminJar,
-			body: {
-				reason: reason,
-			},
+			body: { reason },
 			json: true,
 		});
 
 		assert.strictEqual(response.statusCode, 200);
-		const strike = body.response.strike;
-		const expectedNid = `post-strike:${strike.sid}`;
+
+		await sleep(1500);
+
+		const { unread } = await User.notifications.get(regularUid);
+		const strikeNotification = unread.find(notif => notif && notif.type === 'post-strike');
+		assert(strikeNotification, 'struck user should receive a strike notification');
+		assert(strikeNotification.bodyShort.includes(reason), 'notification should include strike reason');
+		assert(strikeNotification.path.endsWith(`/post/${post.pid}`), 'notification should link to the struck post');
+
+		const adminNotifications = await User.notifications.get(adminUid);
+		const adminCanSeeStrike = adminNotifications.unread
+			.concat(adminNotifications.read || [])
+			.some(notif => notif && notif.type === 'post-strike');
+		assert.strictEqual(adminCanSeeStrike, false, 'notification should be private to the target user');
+	});
+
+	it('should automatically ban the user on the third strike and block posting', async () => {
+		await User.notifications.deleteAll(regularUid);
+		const isBannedBefore = await User.bans.isBanned(regularUid);
+		assert.strictEqual(isBannedBefore, false);
+
+		const reason = 'Third strike: automatic ban';
+		const thirdStrike = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
+			jar: adminJar,
+			body: { reason },
+			json: true,
+		});
+
+		assert.strictEqual(thirdStrike.response.statusCode, 200);
 
 		await sleep(2000);
 
-		const userNotifications = await User.notifications.get(regularUid);
-		const strikeNotifs = userNotifications.unread.filter(notif => notif && notif.nid === expectedNid);
-		assert.strictEqual(strikeNotifs.length, 1, 'target user should have one unread strike notification');
-		const [notification] = strikeNotifs;
-		assert.strictEqual(notification.type, 'post-strike');
-		assert.notStrictEqual(notification.bodyShort.indexOf(reason), -1, 'notification should include strike reason');
-		assert.strictEqual(notification.path, `${nconf.get('relative_path')}/post/${post.pid}`, 'notification should link to the struck post');
+		const isBannedAfter = await User.bans.isBanned(regularUid);
+		assert.strictEqual(isBannedAfter, true, 'user should be banned after third strike');
 
-		const adminNotifications = await User.notifications.get(adminUid);
-		const adminHasStrike = adminNotifications.unread.concat(adminNotifications.read || [])
-			.some(notif => notif && notif.nid === expectedNid);
-		assert.strictEqual(adminHasStrike, false, 'only the target user should see the strike notification');
+		const { unread } = await User.notifications.get(regularUid);
+		const banNotification = unread.find(notif => notif && notif.type === 'post-strike-ban');
+		assert(banNotification, 'banned user should receive a ban notification');
+		assert(banNotification.bodyShort.includes(reason), 'ban notification should include the strike reason');
+
+		const postAttempt = await helpers.request('post', `/api/v3/topics/${post.tid}`, {
+			jar: userJar,
+			body: { content: 'This should be blocked.' },
+			json: true,
+		});
+
+		assert.strictEqual(postAttempt.response.statusCode, 403);
+		assert.strictEqual(postAttempt.body.status.message, 'You do not have enough privileges for this action.');
 	});
 
 	it('should reject strike creation without a reason', async () => {

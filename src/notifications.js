@@ -44,6 +44,7 @@ Notifications.baseTypes = [
 	'notificationType_group-request-membership',
 	'notificationType_new-reward',
 	'notificationType_post-strike',
+	'notificationType_post-strike-ban',
 ];
 
 Notifications.privilegedTypes = [

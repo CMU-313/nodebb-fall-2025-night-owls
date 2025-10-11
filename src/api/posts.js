@@ -521,6 +521,42 @@ postsAPI.createStrike = async function (caller, data) {
 
 	const targetUid = parseInt(strike.targetUid, 10);
 	if (targetUid > 0) {
+		const totalStrikesForUser = await strikes.getCountForUid(targetUid);
+		if (totalStrikesForUser === 3) {
+			const isAlreadyBanned = await user.bans.isBanned(targetUid);
+			if (!isAlreadyBanned) {
+				const configuredDuration = parseInt(meta.config.strikeAutoBanDays, 10);
+				const durationDays = Number.isInteger(configuredDuration) && configuredDuration > 0 ? configuredDuration : 7;
+				const banUntil = Date.now() + (durationDays * 24 * 60 * 60 * 1000);
+				const banLogReason = `Automatic ban after 3 strikes. Latest strike reason: ${reason}`;
+				const banData = await user.bans.ban(targetUid, banUntil, banLogReason);
+
+				setImmediate(async () => {
+					try {
+						const banReasonHtml = strike.reason.replace(/\r?\n/g, '<br/>');
+						const banBodyShort = `You have been banned for ${durationDays} day(s).<br/><strong>Latest reason:</strong> ${banReasonHtml}`;
+						const banBodyLong = `<p><strong>Duration:</strong> ${durationDays} day(s)</p><p><strong>Latest reason:</strong> ${banReasonHtml}</p>`;
+						const notifObj = await notifications.create({
+							type: 'post-strike-ban',
+							bodyShort: banBodyShort,
+							bodyLong: banBodyLong,
+							path: `/post/${strike.pid}`,
+							nid: `post-strike-ban:${banData.uid}:${banData.timestamp}`,
+							from: caller.uid,
+							pid: strike.pid,
+							tid: strike.tid,
+							mergeId: `post-strike-ban:${banData.uid}`,
+						});
+						if (notifObj) {
+							await notifications.push(notifObj, [targetUid]);
+						}
+					} catch (err) {
+						winston.error(err.stack);
+					}
+				});
+			}
+		}
+
 		setImmediate(async () => {
 			try {
 				const [topicTitle, issuerData] = await Promise.all([

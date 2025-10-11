@@ -92,6 +92,10 @@ apiController.loadConfig = async function (req) {
 			size: meta.config.topicThumbSize,
 		},
 		emailPrompt: meta.config.emailPrompt,
+		strikeAutoBanDays: (() => {
+			const configured = parseInt(meta.config.strikeAutoBanDays, 10);
+			return Number.isInteger(configured) && configured > 0 ? configured : 7;
+		})(),
 		useragent: {
 			isSafari: req.useragent && req.useragent.isSafari,
 		},

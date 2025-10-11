@@ -138,6 +138,9 @@ Settings:
     notificationType_post-strike:
       type: string
       description: Notification type for strikes issued against your posts
+    notificationType_post-strike-ban:
+      type: string
+      description: Notification type for automatic bans triggered by strikes
     categoryWatchState:
       type: string
       description: Default watch state for categories
@@ -179,6 +182,7 @@ Settings:
     - notificationType_new-post-flag
     - notificationType_new-user-flag
     - notificationType_post-strike
+    - notificationType_post-strike-ban
     - categoryWatchState
     - notificationType_group-request-membership
     - uid
