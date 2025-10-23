@@ -3,5 +3,6 @@
   "unused": true,
   "eqeqeq": true,
   "latedef": true,
+  "esversion": 11,
   "maxdepth": 4
 }
