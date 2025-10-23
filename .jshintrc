@@ -1,0 +1,7 @@
+{
+  "undef": true,
+  "unused": true,
+  "eqeqeq": true,
+  "latedef": true,
+  "maxdepth": 4
+}
