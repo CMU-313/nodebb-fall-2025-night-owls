@@ -85,6 +85,10 @@
 	"give-strike": "Give strike",
 	"give-strike-confirm": "Give a strike for this post?",
 	"give-strike-success": "Strike recorded.",
+	"give-strike-prompt": "Provide a reason for this strike.",
+	"give-strike-reason-required": "Strike reason is required.",
+	"view-strikes": "View strike reasons",
+	"no-strikes": "No strikes recorded.",
 
 	"merged-message": "This topic has been merged into <a href=\"%1\">%2</a>",
 	"forked-message": "This topic was forked from <a href=\"%1\">%2</a>",

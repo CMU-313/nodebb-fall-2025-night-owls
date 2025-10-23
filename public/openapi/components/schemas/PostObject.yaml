@@ -377,6 +377,8 @@ PostDataObject:
           type: boolean
         display_strike_tools:
           type: boolean
+        canViewStrikes:
+          type: boolean
         display_move_tools:
           type: boolean
         display_post_menu:

@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('assert');
+const util = require('util');
 
 const db = require('./mocks/databasemock');
 const helpers = require('./helpers');
@@ -10,13 +11,33 @@ const Categories = require('../src/categories');
 const Topics = require('../src/topics');
 const plugins = require('../src/plugins');
 
+const sleep = util.promisify(setTimeout);
+
+async function emitViaSocket(socket, event, data) {
+	return await new Promise((resolve, reject) => {
+		socket.emit(event, data, (err, result) => {
+			if (err) {
+				const message = typeof err === 'string' ? err : (err && err.message) || JSON.stringify(err);
+				const error = err instanceof Error ? err : new Error(message);
+				reject(error);
+				return;
+			}
+			resolve(result);
+		});
+	});
+}
+
 describe('Strikes API', () => {
 	let adminUid;
 	let regularUid;
+	let otherUid;
 	let category;
 	let post;
 	let adminJar;
 	let userJar;
+	let adminSocket;
+	let userSocket;
+	let otherSocket;
 
 	before(async () => {
 		const noopEmailer = async () => {};
@@ -38,17 +59,34 @@ describe('Strikes API', () => {
 			content: 'content to strike',
 		}));
 
-		({ jar: adminJar } = await helpers.loginUser('strike-admin', 'hunter2'));
-		({ jar: userJar } = await helpers.loginUser('strike-user', 'hunter2'));
+		const adminLogin = await helpers.loginUser('strike-admin', 'hunter2');
+		const userLogin = await helpers.loginUser('strike-user', 'hunter2');
+		otherUid = await User.create({ username: 'strike-bystander', password: 'hunter2', email: 'strike-bystander@example.com' });
+		const otherLogin = await helpers.loginUser('strike-bystander', 'hunter2');
+
+		adminJar = adminLogin.jar;
+		userJar = userLogin.jar;
+		adminSocket = await helpers.connectSocketIO(adminLogin.response, adminLogin.csrf_token);
+		userSocket = await helpers.connectSocketIO(userLogin.response, userLogin.csrf_token);
+		otherSocket = await helpers.connectSocketIO(otherLogin.response, otherLogin.csrf_token);
 	});
 
-	after(() => {
+	after(async () => {
 		plugins.hooks.unregister('strikes-test', 'static:email.send');
+		[adminSocket, userSocket, otherSocket].forEach((socket) => {
+			if (socket) {
+				socket.close();
+			}
+		});
 	});
 
 	it('should block non-admin users from issuing strikes', async () => {
 		const { response, body } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
 			jar: userJar,
+			body: {
+				reason: 'Testing reason',
+			},
+			json: true,
 		});
 
 		assert.strictEqual(response.statusCode, 403);
@@ -56,8 +94,13 @@ describe('Strikes API', () => {
 	});
 
 	it('should allow admins to issue strikes tied to the target post', async () => {
+		const reason = 'Posting spam links';
 		const { response, body } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
 			jar: adminJar,
+			body: {
+				reason: reason,
+			},
+			json: true,
 		});
 
 		assert.strictEqual(response.statusCode, 200);
@@ -66,10 +109,12 @@ describe('Strikes API', () => {
 		assert.strictEqual(parseInt(strike.pid, 10), post.pid);
 		assert.strictEqual(parseInt(strike.targetUid, 10), regularUid);
 		assert.strictEqual(parseInt(strike.issuerUid, 10), adminUid);
+		assert.strictEqual(strike.reason, reason);
 
 		const stored = await db.getObject(`strike:${strike.sid}`);
 		assert.strictEqual(parseInt(stored.pid, 10), post.pid);
 		assert.strictEqual(parseInt(stored.targetUid, 10), regularUid);
+		assert.strictEqual(stored.reason, reason);
 
 		const postStrikeCount = await db.sortedSetCard(`post:${post.pid}:strikes`);
 		assert.strictEqual(postStrikeCount, 1);
@@ -79,5 +124,98 @@ describe('Strikes API', () => {
 
 		const issuedCount = await db.sortedSetCard(`uid:${adminUid}:issued:strikes`);
 		assert.strictEqual(issuedCount, 1);
+
+		const adminStrikes = await emitViaSocket(adminSocket, 'posts.getStrikes', { pid: post.pid });
+		const userStrikes = await emitViaSocket(userSocket, 'posts.getStrikes', { pid: post.pid });
+		const fetched = adminStrikes.find(item => parseInt(item.sid, 10) === parseInt(strike.sid, 10));
+		assert(fetched, 'admin should see strike details');
+		assert.strictEqual(fetched.reason, reason);
+		const userFetched = userStrikes.find(item => parseInt(item.sid, 10) === parseInt(strike.sid, 10));
+		assert(userFetched, 'target user should see strike details');
+		assert.strictEqual(userFetched.reason, reason);
+	});
+
+	it('should hide strike details from unrelated users', async () => {
+		await assert.rejects(
+			emitViaSocket(otherSocket, 'posts.getStrikes', { pid: post.pid }),
+			(err) => err && /no-privileges/.test(err.message)
+		);
+	});
+
+	it('should notify only the struck user with reason and link', async () => {
+		await Promise.all([
+			User.notifications.deleteAll(regularUid),
+			User.notifications.deleteAll(adminUid),
+		]);
+
+		const reason = 'Reminder: follow community guidelines.';
+		const { response } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
+			jar: adminJar,
+			body: { reason },
+			json: true,
+		});
+
+		assert.strictEqual(response.statusCode, 200);
+
+		await sleep(1500);
+
+		const { unread } = await User.notifications.get(regularUid);
+		const strikeNotification = unread.find(notif => notif && notif.type === 'post-strike');
+		assert(strikeNotification, 'struck user should receive a strike notification');
+		assert(strikeNotification.bodyShort.includes(reason), 'notification should include strike reason');
+		assert(strikeNotification.path.endsWith(`/post/${post.pid}`), 'notification should link to the struck post');
+
+		const adminNotifications = await User.notifications.get(adminUid);
+		const adminCanSeeStrike = adminNotifications.unread
+			.concat(adminNotifications.read || [])
+			.some(notif => notif && notif.type === 'post-strike');
+		assert.strictEqual(adminCanSeeStrike, false, 'notification should be private to the target user');
+	});
+
+	it('should automatically ban the user on the third strike and block posting', async () => {
+		await User.notifications.deleteAll(regularUid);
+		const isBannedBefore = await User.bans.isBanned(regularUid);
+		assert.strictEqual(isBannedBefore, false);
+
+		const reason = 'Third strike: automatic ban';
+		const thirdStrike = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
+			jar: adminJar,
+			body: { reason },
+			json: true,
+		});
+
+		assert.strictEqual(thirdStrike.response.statusCode, 200);
+
+		await sleep(2000);
+
+		const isBannedAfter = await User.bans.isBanned(regularUid);
+		assert.strictEqual(isBannedAfter, true, 'user should be banned after third strike');
+
+		const { unread } = await User.notifications.get(regularUid);
+		const banNotification = unread.find(notif => notif && notif.type === 'post-strike-ban');
+		assert(banNotification, 'banned user should receive a ban notification');
+		assert(banNotification.bodyShort.includes(reason), 'ban notification should include the strike reason');
+
+		const postAttempt = await helpers.request('post', `/api/v3/topics/${post.tid}`, {
+			jar: userJar,
+			body: { content: 'This should be blocked.' },
+			json: true,
+		});
+
+		assert.strictEqual(postAttempt.response.statusCode, 403);
+		assert.strictEqual(postAttempt.body.status.message, 'You do not have enough privileges for this action.');
+	});
+
+	it('should reject strike creation without a reason', async () => {
+		const { response, body } = await helpers.request('post', `/api/v3/posts/${post.pid}/strikes`, {
+			jar: adminJar,
+			body: {
+				reason: '   ',
+			},
+			json: true,
+		});
+
+		assert.strictEqual(response.statusCode, 400);
+		assert.strictEqual(body.status.message, 'Invalid Data');
 	});
 });

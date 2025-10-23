@@ -159,20 +159,57 @@ define('forum/topic/postTools', [
 			e.preventDefault();
 			const btn = $(this);
 			const pid = getData(btn, 'data-pid');
-			bootbox.confirm('[[topic:give-strike-confirm]]', async (confirm) => {
-				if (!confirm) {
-					return;
+			bootbox.prompt({
+				title: '[[topic:give-strike-prompt]]',
+				inputType: 'textarea',
+				maxlength: 500,
+				callback: async (reason) => {
+					const trimmed = reason ? reason.trim() : '';
+					if (reason === null) {
+						return;
+					}
+					if (!trimmed) {
+						alerts.error('[[topic:give-strike-reason-required]]');
+						return;
+					}
+
+					btn.addClass('disabled');
+					try {
+						await api.post(`/posts/${encodeURIComponent(pid)}/strikes`, { reason: trimmed });
+						alerts.success('[[topic:give-strike-success]]');
+						PostTools.removeMenu(btn.parents('[component="post"]').first());
+					} catch (err) {
+						alerts.error(err);
+					} finally {
+						btn.removeClass('disabled');
+					}
+				},
+			});
+		});
+
+		postContainer.on('click', '[component="post/view-strikes"]', function (e) {
+			e.preventDefault();
+			const pid = getData($(this), 'data-pid');
+			socket.emit('posts.getStrikes', { pid }, (err, strikes) => {
+				if (err) {
+					return alerts.error(err);
 				}
-				btn.addClass('disabled');
-				try {
-					await api.post(`/posts/${encodeURIComponent(pid)}/strikes`);
-					alerts.success('[[topic:give-strike-success]]');
-					PostTools.removeMenu(btn.parents('[component="post"]').first());
-				} catch (err) {
-					alerts.error(err);
-				} finally {
-					btn.removeClass('disabled');
+				if (!Array.isArray(strikes) || !strikes.length) {
+					return bootbox.alert('[[topic:no-strikes]]');
 				}
+				const items = strikes.map((strike) => {
+					const reason = app.escapeHTML(strike.reason || '');
+					const timestamp = strike.timestampISO ? app.formatTime(strike.timestampISO) : '';
+					return `<li class="list-group-item">
+						<div class="fw-semibold">${reason}</div>
+						${timestamp ? `<div class="text-muted small">${timestamp}</div>` : ''}
+					</li>`;
+				}).join('');
+				bootbox.dialog({
+					title: '[[topic:view-strikes]]',
+					message: `<ul class="list-group list-group-flush">${items}</ul>`,
+					closeButton: true,
+				});
 			});
 		});
 

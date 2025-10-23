@@ -11,6 +11,21 @@ post:
       required: true
       description: a valid post id
       example: 2
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            reason:
+              type: string
+              minLength: 1
+              maxLength: 500
+              description: The explanation provided to the user about the strike.
+              example: "Original post contains spam links"
+          required:
+            - reason
   responses:
     '200':
       description: Strike successfully recorded
@@ -41,6 +56,11 @@ post:
                         type: number
                       timestamp:
                         type: number
+                      timestampISO:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
                       ip:
                         type: string
                     required:
@@ -51,6 +71,7 @@ post:
                       - issuerUid
                       - cid
                       - timestamp
+                      - reason
             required:
               - status
               - response
