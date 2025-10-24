@@ -1,5 +1,5 @@
 //this file was written with the help of Claude sonnet 4.5
-const Iroh = require('iroh');
+const Iroh = require('../src/iroh');
 
 // Define your function as a string
 //original function was mine
