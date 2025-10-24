@@ -14,7 +14,10 @@
         "lint": "eslint --cache ./nodebb .",
         "test": "nyc --reporter=html --reporter=text-summary mocha",
         "coverage": "nyc report --reporter=text-lcov > ./coverage/lcov.info",
-        "coveralls": "nyc report --reporter=text-lcov | coveralls && rm -r coverage"
+        "coveralls": "nyc report --reporter=text-lcov | coveralls && rm -r coverage",
+        "scan:staged": "gitleaks-secret-scanner",
+        "scan:all": "gitleaks-secret-scanner --diff-mode all",
+        "scan:history": "gitleaks-secret-scanner --diff-mode history"
     },
     "nyc": {
         "exclude": [
@@ -157,6 +160,7 @@
         "zxcvbn": "4.4.2"
     },
     "devDependencies": {
+        "gitleaks-secret-scanner": "^1.2.2",
         "@apidevtools/swagger-parser": "10.1.0",
         "@commitlint/cli": "19.8.1",
         "@commitlint/config-angular": "19.8.1",
