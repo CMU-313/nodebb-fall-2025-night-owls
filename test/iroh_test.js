@@ -1,6 +1,8 @@
+//this file was written with the help of Claude sonnet 4.5
 const Iroh = require('iroh');
 
 // Define your function as a string
+//original function was mine
 const code = `
 function factorial(n) {
     if (n === 0 || n === 1) {
@@ -13,6 +15,7 @@ function factorial(n) {
 console.log('Result:', factorial(3));
 `;
 
+//Clause Sonnet 4.5 helped add stage and listeners
 // Create an iroh stage and add listeners
 const stage = new Iroh.Stage(code);
 
