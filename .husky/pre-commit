@@ -1,4 +1,8 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Run Gitleaks secret scanner first
+npx gitleaks-secret-scanner --diff-mode staged
+
+# Then run linting
 npx --no-install lint-staged
