@@ -269,13 +269,13 @@ get:
                         - name
                         - updated
                         - latest
-                        - url
                         - numInstalls
                         - isCompatible
                         - id
                         - installed
                         - active
                         - isTheme
+                        - error
                         - version
                         - license
                         - outdated

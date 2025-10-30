@@ -20,7 +20,7 @@ const translator = require('./translator');
 const pubsub = require('./pubsub');
 const file = require('./file');
 
-const viewsDir = nconf.get('views_dir');
+const getViewsDir = () => nconf.get('views_dir');
 const Emailer = module.exports;
 
 let prevConfig;
@@ -72,14 +72,15 @@ const buildCustomTemplates = async (config) => {
 			return;
 		}
 
+		const currentViewsDir = getViewsDir();
 		const [templates, allPaths] = await Promise.all([
 			Emailer.getTemplates(config),
-			file.walk(viewsDir),
+			file.walk(currentViewsDir),
 		]);
 
 		const templatesToBuild = templates.filter(template => toBuild.includes(template.path));
 		const paths = _.fromPairs(allPaths.map((p) => {
-			const relative = path.relative(viewsDir, p).replace(/\\/g, '/');
+			const relative = path.relative(currentViewsDir, p).replace(/\\/g, '/');
 			return [relative, p];
 		}));
 
@@ -96,8 +97,31 @@ const buildCustomTemplates = async (config) => {
 	}
 };
 
+let ensureTemplatesPromise;
+async function ensureEmailTemplatesDir() {
+	const currentViewsDir = getViewsDir();
+	const emailsDir = path.join(currentViewsDir, 'emails');
+
+	if (await file.exists(emailsDir)) {
+		return;
+	}
+
+	if (!ensureTemplatesPromise) {
+		ensureTemplatesPromise = (async () => {
+			await meta.templates.compile();
+			Benchpress.flush();
+		})().finally(() => {
+			ensureTemplatesPromise = null;
+		});
+	}
+
+	await ensureTemplatesPromise;
+}
+
 Emailer.getTemplates = async (config) => {
-	const emailsPath = path.join(viewsDir, 'emails');
+	await ensureEmailTemplatesDir();
+	const currentViewsDir = getViewsDir();
+	const emailsPath = path.join(currentViewsDir, 'emails');
 	let emails = await file.walk(emailsPath);
 	emails = emails.filter(email => !email.endsWith('.js'));
 
@@ -374,6 +398,7 @@ Emailer.sendViaFallback = async (data) => {
 };
 
 Emailer.renderAndTranslate = async (template, params, lang) => {
+	await ensureEmailTemplatesDir();
 	const html = await app.renderAsync(`emails/${template}`, params);
 	return await translator.translate(html, lang);
 };

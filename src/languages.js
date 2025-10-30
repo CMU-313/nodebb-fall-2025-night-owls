@@ -7,13 +7,19 @@ const { paths } = require('./constants');
 const plugins = require('./plugins');
 
 const Languages = module.exports;
-const languagesPath = path.join(__dirname, '../build/public/language');
+const primaryLanguagesPath = path.join(__dirname, '../build/public/language');
+const fallbackLanguagesPath = path.join(paths.baseDir, 'public/language');
+
+function resolveLanguagesPath() {
+	return fs.existsSync(primaryLanguagesPath) ? primaryLanguagesPath : fallbackLanguagesPath;
+}
 
 const files = fs.readdirSync(path.join(paths.nodeModules, '/timeago/locales'));
 Languages.timeagoCodes = files.filter(f => f.startsWith('jquery.timeago')).map(f => f.split('.')[2]);
 
 Languages.get = async function (language, namespace) {
-	const pathToLanguageFile = path.join(languagesPath, language, `${namespace}.json`);
+	const languagesPath = resolveLanguagesPath();
+	const pathToLanguageFile = path.resolve(languagesPath, language, `${namespace}.json`);
 	if (!pathToLanguageFile.startsWith(languagesPath)) {
 		throw new Error('[[error:invalid-path]]');
 	}
@@ -32,6 +38,7 @@ Languages.listCodes = async function () {
 	if (codeCache && codeCache.length) {
 		return codeCache;
 	}
+	const languagesPath = resolveLanguagesPath();
 	try {
 		const file = await fs.promises.readFile(path.join(languagesPath, 'metadata.json'), 'utf8');
 		const parsed = JSON.parse(file);
@@ -39,11 +46,15 @@ Languages.listCodes = async function () {
 		codeCache = parsed.languages;
 		return parsed.languages;
 	} catch (err) {
-		if (err.code === 'ENOENT') {
-			return [];
+		if (err.code !== 'ENOENT') {
+			throw err;
 		}
-		throw err;
 	}
+
+	const entries = await fs.promises.readdir(languagesPath, { withFileTypes: true });
+	const codes = entries.filter(entry => entry.isDirectory()).map(entry => entry.name);
+	codeCache = codes;
+	return codes;
 };
 
 let listCache = null;
@@ -53,6 +64,7 @@ Languages.list = async function () {
 	}
 
 	const codes = await Languages.listCodes();
+	const languagesPath = resolveLanguagesPath();
 
 	let languages = await Promise.all(codes.map(async (folder) => {
 		try {

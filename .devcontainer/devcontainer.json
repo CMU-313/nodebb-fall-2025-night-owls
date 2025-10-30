@@ -5,7 +5,7 @@
     "build": {
         "dockerfile": "Dockerfile"
     },
-    "postCreateCommand": "redis-server --daemonize yes",
+    "postCreateCommand": "redis-server --daemonize yes && npm install --save-dev husky gitleaks-secret-scanner && npx husky install",
     "postStartCommand": "redis-server --daemonize yes || true",
 
     "forwardPorts": [4567],
