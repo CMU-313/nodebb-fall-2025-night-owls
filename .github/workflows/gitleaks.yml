@@ -29,11 +29,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install npm dependencies
-        run: npm install --save-dev gitleaks-secret-scanner
+      - name: Install gitleaks-secret-scanner
+        run: npm install -g gitleaks-secret-scanner
 
       - name: Run Gitleaks on all changes
-        run: npm run scan:secrets
+        run: gitleaks-secret-scanner --diff-mode all --html-report
         continue-on-error: false
 
       - name: Upload report as artifact
