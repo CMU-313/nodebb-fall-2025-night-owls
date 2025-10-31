@@ -78,3 +78,6 @@ test.sh
 
 # Personal development instructions
 .github/personal-instructions.md
+
+# stryker temp files
+.stryker-tmp
