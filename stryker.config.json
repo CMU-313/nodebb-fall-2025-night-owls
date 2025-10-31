@@ -10,5 +10,6 @@
   "testRunner": "mocha",
   "testRunner_comment": "Take a look at https://www.nodebb.org for information about the command plugin.",
   "coverageAnalysis": "off",
-  "buildCommand": "npm run build"
+  "buildCommand": "npm run build",
+  "mutate": ["src/**/*.js", "!src/cli/index.js"]
 }
