@@ -10,6 +10,7 @@ const groups = require('../groups');
 const privileges = require('../privileges');
 const activitypub = require('../activitypub');
 const utils = require('../utils');
+const translate = require('../translate');
 
 module.exports = function (Posts) {
 	Posts.create = async function (data) {
@@ -19,6 +20,7 @@ module.exports = function (Posts) {
 		const timestamp = data.timestamp || Date.now();
 		const isMain = data.isMain || false;
 		const anonymous = data.anonymous ? 1 : 0;
+		const [isEnglish, translatedContent] = await translate.translate(data);
 
 		if (!uid && parseInt(uid, 10) !== 0) {
 			throw new Error('[[error:invalid-uid]]');
@@ -29,7 +31,7 @@ module.exports = function (Posts) {
 		}
 
 		const pid = data.pid || await db.incrObjectField('global', 'nextPid');
-		let postData = { pid, uid, tid, content, sourceContent, timestamp, anonymous };
+		let postData = { pid, uid, tid, content, sourceContent, timestamp, anonymous, isEnglish, translatedContent };
 
 		if (data.toPid) {
 			postData.toPid = data.toPid;

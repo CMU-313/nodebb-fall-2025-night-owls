@@ -23,7 +23,7 @@ module.exports = function (Posts) {
 		options.extraFields = options.hasOwnProperty('extraFields') ? options.extraFields : [];
 		const canViewAnonymousOwner = Boolean(options.canViewAnonymousOwner);
 
-		const fields = ['pid', 'tid', 'toPid', 'url', 'content', 'sourceContent', 'uid', 'timestamp', 'deleted', 'upvotes', 'downvotes', 'replies', 'handle', 'anonymous'].concat(options.extraFields);
+		const fields = ['pid', 'tid', 'toPid', 'url', 'content', 'sourceContent', 'uid', 'timestamp', 'deleted', 'upvotes', 'downvotes', 'replies', 'handle', 'anonymous', 'isEnglish', 'translatedContent'].concat(options.extraFields);
 
 		let posts = await Posts.getPostsFields(pids, fields);
 		posts = posts.filter(Boolean);

@@ -200,7 +200,7 @@ Plugins.normalise = async function (apiReturn) {
 		packageData.id = packageData.name;
 		packageData.installed = false;
 		packageData.active = false;
-		packageData.url = packageData.url || (packageData.repository ? packageData.repository.url : '');
+		packageData.url = resolvePackageUrl(packageData);
 		pluginMap[packageData.name] = packageData;
 	});
 
@@ -220,7 +220,7 @@ Plugins.normalise = async function (apiReturn) {
 		pluginMap[plugin.id].id = pluginMap[plugin.id].id || plugin.id;
 		pluginMap[plugin.id].name = plugin.name || pluginMap[plugin.id].name;
 		pluginMap[plugin.id].description = plugin.description;
-		pluginMap[plugin.id].url = pluginMap[plugin.id].url || plugin.url;
+		pluginMap[plugin.id].url = pluginMap[plugin.id].url || resolvePackageUrl(plugin);
 		pluginMap[plugin.id].installed = true;
 		pluginMap[plugin.id].isTheme = themeNamePattern.test(plugin.id);
 		pluginMap[plugin.id].error = plugin.error || false;
@@ -286,7 +286,7 @@ Plugins.showInstalled = async function () {
 			winston.error(err.stack);
 		}
 	}
-	const plugins = await Promise.all(pluginPaths.map(file => load(file)));
+const plugins = await Promise.all(pluginPaths.map(file => load(file)));
 	return plugins.filter(Boolean);
 };
 
@@ -334,3 +334,24 @@ async function isDirectory(dirPath) {
 }
 
 require('../promisify')(Plugins);
+
+function resolvePackageUrl(packageData = {}) {
+	if (packageData.url) {
+		return packageData.url;
+	}
+
+	const { repository, homepage } = packageData;
+	if (repository) {
+		if (typeof repository === 'string') {
+			return repository;
+		}
+		if (typeof repository.url === 'string') {
+			return repository.url;
+		}
+		if (typeof repository.href === 'string') { // e.g. npm registry shape
+			return repository.href;
+		}
+	}
+
+	return typeof homepage === 'string' ? homepage : '';
+}
