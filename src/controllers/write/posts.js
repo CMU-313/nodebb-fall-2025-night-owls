@@ -164,7 +164,7 @@ Posts.unbookmark = async (req, res) => {
 };
 
 Posts.createStrike = async (req, res) => {
-	const strike = await api.posts.createStrike(req, { pid: req.params.pid });
+	const strike = await api.posts.createStrike(req, { pid: req.params.pid, reason: req.body.reason });
 	helpers.formatApiResponse(200, res, { strike });
 };
 

@@ -157,6 +157,8 @@ get:
                 type: boolean
               topicSearchEnabled:
                 type: boolean
+              strikeAutoBanDays:
+                type: number
               hideSubCategories:
                 type: boolean
               hideCategoryLastPost:
