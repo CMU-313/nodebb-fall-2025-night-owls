@@ -286,7 +286,7 @@ Plugins.showInstalled = async function () {
 			winston.error(err.stack);
 		}
 	}
-const plugins = await Promise.all(pluginPaths.map(file => load(file)));
+	const plugins = await Promise.all(pluginPaths.map(file => load(file)));
 	return plugins.filter(Boolean);
 };
 
