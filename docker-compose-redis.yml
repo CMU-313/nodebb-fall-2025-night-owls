@@ -18,7 +18,7 @@ services:
     # docker compose -f docker-compose-redis.yml build translator
     ###########################################################################
 
-    build: ../translator-service
+    build: ./translator-service
     command: flask run --host=0.0.0.0
     depends_on:
       - ollama
