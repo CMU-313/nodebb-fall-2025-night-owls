@@ -58,7 +58,10 @@ process.on('message', async (msg) => {
 			getSetData(`uid:${targetUid}:downvote`, 'post:', targetUid),
 			getSetData(`following:${targetUid}`, 'user:', targetUid),
 		]);
-		delete userData.password;
+		
+		if (userData) {
+			delete userData.password;
+		}
 
 		let chatData = [];
 		await batch.processSortedSet(`uid:${targetUid}:chat:rooms`, async (roomIds) => {

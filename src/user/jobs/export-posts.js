@@ -45,7 +45,7 @@ process.on('message', async (msg) => {
 			interval: 1000,
 		});
 
-		const fields = payload.length ? Object.keys(payload[0]) : [];
+		const fields = payload.length ? Object.keys(payload[0]) : ['pid', 'content', 'timestamp', 'deleted', 'upvotes', 'downvotes'];
 		const opts = { fields };
 		const csv = await json2csvAsync(payload, opts);
 		await fs.promises.writeFile(filePath, csv);
