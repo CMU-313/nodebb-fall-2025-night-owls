@@ -2,6 +2,7 @@
 
 const validator = require('validator');
 const _ = require('lodash');
+const winston = require('winston');
 
 const db = require('../database');
 const utils = require('../utils');
@@ -491,11 +492,22 @@ postsAPI.createStrike = async function (caller, data) {
 		throw new Error('[[error:no-privileges]]');
 	}
 
+	const reason = typeof data.reason === 'string' ? data.reason.trim() : '';
+	if (!reason) {
+		throw new Error('[[error:invalid-data]]');
+	}
+	if (reason.length > 500) {
+		throw new Error('[[error:content-too-long, 500]]');
+	}
+
 	const strike = await strikes.create({
 		issuerUid: caller.uid,
 		pid: data.pid,
 		ip: caller.ip,
+		reason: reason,
 	});
+	strike.timestampISO = utils.toISOString(strike.timestamp);
+	strike.reason = validator.escape(strike.reason);
 
 	await events.log({
 		type: 'post-strike',
@@ -506,6 +518,79 @@ postsAPI.createStrike = async function (caller, data) {
 		targetUid: strike.targetUid,
 		ip: caller.ip,
 	});
+
+	const targetUid = parseInt(strike.targetUid, 10);
+	if (targetUid > 0) {
+		const totalStrikesForUser = await strikes.getCountForUid(targetUid);
+		if (totalStrikesForUser === 3) {
+			const isAlreadyBanned = await user.bans.isBanned(targetUid);
+			if (!isAlreadyBanned) {
+				const configuredDuration = parseInt(meta.config.strikeAutoBanDays, 10);
+				const durationDays = Number.isInteger(configuredDuration) && configuredDuration > 0 ? configuredDuration : 7;
+				const banUntil = Date.now() + (durationDays * 24 * 60 * 60 * 1000);
+				const banLogReason = `Automatic ban after 3 strikes. Latest strike reason: ${reason}`;
+				const banData = await user.bans.ban(targetUid, banUntil, banLogReason);
+
+				setImmediate(async () => {
+					try {
+						const banReasonHtml = strike.reason.replace(/\r?\n/g, '<br/>');
+						const banBodyShort = `You have been banned for ${durationDays} day(s).<br/><strong>Latest reason:</strong> ${banReasonHtml}`;
+						const banBodyLong = `<p><strong>Duration:</strong> ${durationDays} day(s)</p><p><strong>Latest reason:</strong> ${banReasonHtml}</p>`;
+						const notifObj = await notifications.create({
+							type: 'post-strike-ban',
+							bodyShort: banBodyShort,
+							bodyLong: banBodyLong,
+							path: `/post/${strike.pid}`,
+							nid: `post-strike-ban:${banData.uid}:${banData.timestamp}`,
+							from: caller.uid,
+							pid: strike.pid,
+							tid: strike.tid,
+							mergeId: `post-strike-ban:${banData.uid}`,
+						});
+						if (notifObj) {
+							await notifications.push(notifObj, [targetUid]);
+						}
+					} catch (err) {
+						winston.error(err.stack);
+					}
+				});
+			}
+		}
+
+		setImmediate(async () => {
+			try {
+				const [topicTitle, issuerData] = await Promise.all([
+					topics.getTopicField(strike.tid, 'title'),
+					user.getUserFields(caller.uid, ['displayname', 'username']),
+				]);
+				const rawTitle = topicTitle ? String(topicTitle) : '';
+				const escapedTitle = utils.escapeHTML(utils.decodeHTMLEntities(rawTitle));
+				const displayTitle = escapedTitle || `post #${strike.pid}`;
+				const issuerName = utils.escapeHTML(String(
+					(issuerData && (issuerData.displayname || issuerData.username)) || 'Admin'
+				));
+				const reasonHtml = strike.reason.replace(/\r?\n/g, '<br/>');
+				const bodyShort = `Your post "<strong>${displayTitle}</strong>" received a strike.<br/><strong>Reason:</strong> ${reasonHtml}`;
+				const bodyLong = `<p><strong>Reason:</strong> ${reasonHtml}</p><p><strong>Issued by:</strong> ${issuerName}</p>`;
+				const notifObj = await notifications.create({
+					type: 'post-strike',
+					bodyShort: bodyShort,
+					bodyLong: bodyLong,
+					path: `/post/${strike.pid}`,
+					nid: `post-strike:${strike.sid}`,
+					from: caller.uid,
+					pid: strike.pid,
+					tid: strike.tid,
+					mergeId: `post-strike:${strike.sid}`,
+				});
+				if (notifObj) {
+					await notifications.push(notifObj, [targetUid]);
+				}
+			} catch (err) {
+				winston.error(err.stack);
+			}
+		});
+	}
 
 	return strike;
 };

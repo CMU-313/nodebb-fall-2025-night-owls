@@ -6,9 +6,17 @@ const plugins = require('./plugins');
 
 const Strikes = module.exports;
 
-Strikes.create = async function ({ issuerUid, pid, ip }) {
+Strikes.create = async function ({ issuerUid, pid, ip, reason }) {
 	if (!issuerUid || !pid) {
 		throw new Error('[[error:invalid-data]]');
+	}
+
+	const reasonString = typeof reason === 'string' ? reason.trim() : '';
+	if (!reasonString) {
+		throw new Error('[[error:invalid-data]]');
+	}
+	if (reasonString.length > 500) {
+		throw new Error('[[error:content-too-long, 500]]');
 	}
 
 	const post = await posts.getPostFields(pid, ['pid', 'uid', 'tid']);
@@ -30,6 +38,7 @@ Strikes.create = async function ({ issuerUid, pid, ip }) {
 		issuerUid: issuerUid,
 		cid: cid,
 		timestamp: timestamp,
+		reason: reasonString,
 	};
 	if (ip) {
 		strike.ip = ip;
@@ -72,6 +81,9 @@ Strikes.listForPid = async function (pid, start = 0, stop = -1) {
 				parsed[field] = Number.isNaN(value) ? parsed[field] : value;
 			}
 		});
+		if (parsed.reason) {
+			parsed.reason = String(parsed.reason);
+		}
 		return parsed;
 	}).filter(Boolean);
 };

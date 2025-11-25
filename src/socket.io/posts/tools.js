@@ -51,6 +51,7 @@ module.exports = function (SocketPosts) {
 		postData.display_manage_editors_tools = results.isAdmin || results.isModerator || postData.selfPost;
 		postData.display_ip_ban = (results.isAdmin || results.isGlobalMod) && !postData.selfPost;
 		postData.display_strike_tools = results.isAdmin;
+		postData.canViewStrikes = results.isAdmin || postData.selfPost;
 		postData.strikeCount = await strikes.getCountForPid(data.pid);
 		postData.display_history = results.history && results.canViewHistory;
 		postData.display_original_url = !utils.isNumber(data.pid);
@@ -74,6 +75,33 @@ module.exports = function (SocketPosts) {
 		postData.tools = tools;
 
 		return results;
+	};
+
+	SocketPosts.getStrikes = async function (socket, data) {
+		if (!data || !data.pid) {
+			throw new Error('[[error:invalid-data]]');
+		}
+
+		const post = await posts.getPostFields(data.pid, ['uid']);
+		if (!post || !post.uid) {
+			throw new Error('[[error:no-post]]');
+		}
+
+		const isAdmin = await user.isAdministrator(socket.uid);
+		const isTarget = String(socket.uid) === String(post.uid);
+
+		if (!isAdmin && !isTarget) {
+			throw new Error('[[error:no-privileges]]');
+		}
+
+		const list = await strikes.listForPid(data.pid);
+		return list.map(strike => ({
+			sid: strike.sid,
+			reason: strike.reason,
+			timestamp: strike.timestamp,
+			issuerUid: strike.issuerUid,
+			timestampISO: strike.timestamp ? utils.toISOString(strike.timestamp) : null,
+		}));
 	};
 
 	SocketPosts.changeOwner = async function (socket, data) {

@@ -177,6 +177,7 @@ module.exports = function (Topics) {
 				post.display_delete_tools = topicPrivileges.isAdminOrMod || (post.selfPost && topicPrivileges['posts:delete']);
 				post.display_moderator_tools = post.display_edit_tools || post.display_delete_tools;
 				post.display_strike_tools = !!topicPrivileges.isAdmin;
+				post.canViewStrikes = !!(topicPrivileges.isAdmin || post.selfPost);
 				post.display_move_tools = topicPrivileges.isAdminOrMod && post.index !== 0;
 				post.display_post_menu = topicPrivileges.isAdminOrMod ||
 					(post.selfPost && !topicData.locked && !post.deleted) ||

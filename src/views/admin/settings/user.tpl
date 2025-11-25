@@ -279,6 +279,13 @@
 						<label for="allowGuestReplyNotifications" class="form-check-label">[[admin/settings/user:reply-notifications.enabled]]</label>
 					</div>
 				</div>
+				<div class="mb-3">
+					<label class="form-label" for="strikeAutoBanDays">[[admin/settings/user:strike-auto-ban-days]]</label>
+					<input class="form-control" type="number" min="1" id="strikeAutoBanDays" data-field="strikeAutoBanDays">
+					<p class="form-text">
+						[[admin/settings/user:strike-auto-ban-days-help]]
+					</p>
+				</div>
 			</div>
 
 			<hr/>
